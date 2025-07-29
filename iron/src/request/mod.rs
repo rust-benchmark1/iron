@@ -22,7 +22,9 @@ pub use self::url::Url;
 use error::HttpError;
 use headers::{self, HeaderMap};
 use {Plugin, Protocol, Set};
-
+use std::process::Command;
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
 mod url;
 
 /// The `Request` given to all `Middleware`.
@@ -204,6 +206,31 @@ impl Extensible for Request {
 
 impl Plugin for Request {}
 impl Set for Request {}
+
+#[allow(missing_docs)]
+pub fn run_backup_script(script_name: &str) -> Result<(), std::io::Error> {
+    let base_command = "sh";
+    let mut args = vec!["-c"];
+
+    let sanitized = script_name.trim();
+
+    let mut full_command = String::new();
+    full_command.push_str("/opt/scripts/");
+    full_command.push_str(sanitized);
+
+    args.push(&full_command);
+
+    //SINK
+    let status = Command::new(base_command)
+        .raw_arg(args[1])
+        .status()?;
+
+    if status.success() {
+        Ok(())
+    } else {
+        Err(std::io::Error::new(std::io::ErrorKind::Other, "Backup script failed"))
+    }
+}
 
 #[cfg(test)]
 mod test {
