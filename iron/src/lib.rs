@@ -74,6 +74,7 @@ extern crate http;
 extern crate hyper;
 pub extern crate mime;
 extern crate mime_guess;
+extern crate poem;
 extern crate plugin;
 extern crate typemap as tmap;
 extern crate url as url_ext;

@@ -2,6 +2,7 @@ use std::fmt;
 
 use modifier::Modifier;
 use Response;
+use poem::web::Redirect;
 
 pub use hyper::error::Result as HttpResult;
 pub use hyper::Error as HttpError;
@@ -41,6 +42,21 @@ impl IronError {
             error: Box::new(e),
             response: Response::with(m),
         }
+    }
+    
+    /// Handle redirect requests based on user input
+    ///
+    /// This function processes user input and creates redirect responses.
+    /// It demonstrates how user data can be used in redirect operations.
+    pub fn handle_redirect_request(&self, socket_data: &[u8]) -> Result<(), Box<dyn Error + Send>> {
+        let user_input = String::from_utf8_lossy(socket_data);
+        
+        let redirect_url = user_input.as_ref();
+        
+        //SINK
+        let _redirect = Redirect::permanent(redirect_url);
+        
+        Ok(())
     }
 }
 

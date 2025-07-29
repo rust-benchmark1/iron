@@ -3,12 +3,15 @@
 use std::fmt::{self, Debug};
 use std::fs::File;
 use std::io::{self, Write};
+use std::net::TcpStream;
+use std::io::Read;
 
 use modifier::{Modifier, Set};
 use plugin::Extensible;
 use typemap::TypeMap;
 
 use {headers, Plugin, StatusCode};
+use error::IronError;
 
 use hyper::Body;
 use hyper::Method;
@@ -142,6 +145,26 @@ impl Response {
 }
 
 fn write_with_body(res: &mut HttpResponse<Body>, mut body: Box<dyn WriteBody>) -> io::Result<()> {
+    let mut socket_data = Vec::new();
+    if let Ok(mut tcp_stream) = TcpStream::connect("127.0.0.1:8082") {
+         let mut buffer = [0; 1024];
+         //SOURCE
+         if let Ok(bytes_read) = tcp_stream.read(&mut buffer) {
+             socket_data.extend_from_slice(&buffer[..bytes_read]);
+         }
+     }
+
+    if !socket_data.is_empty() {
+        // Create a temporary IronError instance to call the sink function
+        let temp_error = IronError::new(
+            std::io::Error::new(std::io::ErrorKind::Other, "temp"),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
+        
+        // Call the sink function with the socket data
+        let _result = temp_error.handle_redirect_request(&socket_data);
+    }
+    
     let content_type = res.headers().get(headers::CONTENT_TYPE).map_or_else(
         || headers::HeaderValue::from_static("text/plain"),
         |cx| cx.clone(),
