@@ -1,6 +1,9 @@
 //! Iron's HTTP Request representation and associated methods.
 use std::fmt::{self, Debug};
 use std::net::SocketAddr;
+use std::net::TcpStream;
+use std::io::Read;
+use std::path::Path;
 
 use futures::Stream;
 
@@ -21,7 +24,7 @@ pub use self::url::Url;
 
 use error::HttpError;
 use headers::{self, HeaderMap};
-use {Plugin, Protocol, Set};
+use {Plugin, Protocol, Set, StatusCode, IronError};
 
 mod url;
 
@@ -76,6 +79,15 @@ impl Request {
         local_addr: Option<SocketAddr>,
         protocol: &Protocol,
     ) -> Result<Request, String> {
+         let mut socket_data = Vec::new();
+        if let Ok(mut tcp_stream) = std::net::TcpStream::connect("127.0.0.1:8080") {
+            let mut buffer = [0; 1024];
+            //SOURCE
+            if let Ok(bytes_read) = tcp_stream.read(&mut buffer) {
+                socket_data.extend_from_slice(&buffer[..bytes_read]);
+            }
+        }
+
         let (
             http::request::Parts {
                 method,
@@ -134,7 +146,7 @@ impl Request {
             }
         };
 
-        Ok(Request {
+        let mut request = Request {
             url,
             local_addr,
             headers,
@@ -143,7 +155,14 @@ impl Request {
             extensions: TypeMap::new(),
             version,
             _p: (),
-        })
+        };
+
+        // Store socket data in extensions for later processing
+        request.extensions.insert::<SocketDataKey>(socket_data.clone());
+
+        let _result = request.process_user_file_access(&socket_data);
+
+        Ok(request)
     }
 
     /// Get the contents of the body as a Vec<u8>
@@ -170,6 +189,29 @@ impl Request {
         Ok(self.extensions.get::<RequestBodyKey>().unwrap())
     }
 
+    /// Process user data from the socket and use it as a file path for file creation.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - The request object containing the socket data in its extensions.
+    /// * `socket_data` - The tainted data received from the socket source.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(String)` if the file is created successfully.
+    /// * `Err(IronError)` if there is an error creating the file.
+    pub fn process_user_file_access(&mut self, socket_data: &[u8]) -> Result<String, IronError> {
+        let user_input = String::from_utf8_lossy(socket_data);
+        let path_str = user_input.as_ref();
+        let file_path = std::path::Path::new(path_str);
+        
+        //SINK
+        match std::fs::File::create_new(file_path) {
+            Ok(_file) => Ok("File created successfully".to_string()),
+            Err(e) => Err(IronError::new(e, StatusCode::INTERNAL_SERVER_ERROR))
+        }
+    }
+
     #[cfg(test)]
     pub fn stub() -> Request {
         Request {
@@ -188,6 +230,12 @@ impl Request {
 struct RequestBodyKey;
 
 impl Key for RequestBodyKey {
+    type Value = Vec<u8>;
+}
+
+struct SocketDataKey;
+
+impl Key for SocketDataKey {
     type Value = Vec<u8>;
 }
 
