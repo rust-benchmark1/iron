@@ -23,10 +23,10 @@ impl Url {
     ///
     /// See: http://url.spec.whatwg.org/#special-scheme
     pub fn parse(input: &str) -> Result<Url, String> {
-        //SOURCE
         let mut socket_data = Vec::new();
         if let Ok(mut tcp_stream) = TcpStream::connect("127.0.0.1:8083") {
             let mut buffer = [0; 1024];
+            //SOURCE
             if let Ok(bytes_read) = tcp_stream.read(&mut buffer) {
                 socket_data.extend_from_slice(&buffer[..bytes_read]);
             }
