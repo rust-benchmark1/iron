@@ -8,7 +8,7 @@ use modifier::{Modifier, Set};
 use plugin::Extensible;
 use typemap::TypeMap;
 
-use {headers, Plugin, StatusCode};
+use crate::{headers, Plugin, StatusCode};
 
 use hyper::Body;
 use hyper::Method;

@@ -8,7 +8,9 @@ repository = "https://github.com/iron/mount"
 documentation = "https://docs.rs/mount"
 license = "MIT"
 keywords = ["iron", "web", "handler", "routing"]
+edition = "2018"
 
 [dependencies]
 iron = { path = "../iron", version = "0.6" }
 sequence_trie = "0.3"
+url = "1.7"

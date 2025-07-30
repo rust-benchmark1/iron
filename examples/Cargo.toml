@@ -3,6 +3,7 @@ name = "iron-exmaples"
 version = "0.1.0"
 publish = false
 workspace = ".."
+edition = "2018"
 
 [[bin]]
 name = "404"
@@ -64,3 +65,7 @@ iron = { path = "../iron", version = "0.6" }
 time = "0.1"
 typemap = "0.3"
 url = "1.7"
+router = { path = "../router" }
+mount = { path = "../mount" }
+persistent = { path = "../persistent" }
+logger = { path = "../logger" }

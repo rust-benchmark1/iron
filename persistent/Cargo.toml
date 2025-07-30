@@ -8,7 +8,9 @@ repository = "https://github.com/iron/persistent"
 documentation = "https://docs.rs/persistent"
 license = "MIT"
 keywords = ["iron", "web", "persistence", "sharing", "global"]
+edition = "2018"
 
 [dependencies]
 iron = { path = "../iron", version = "0.6" }
 plugin = "0.2"
+typemap = "0.3"

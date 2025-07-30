@@ -6,6 +6,7 @@ description = "Logging middleware for the Iron framework."
 repository = "https://github.com/iron/logger"
 keywords = ["iron", "web", "logger", "log", "timer"]
 license = "MIT"
+edition = "2018"
 
 [dependencies]
 iron = { version = ">=0.4,<0.8.0", default-features = false }

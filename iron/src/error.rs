@@ -1,7 +1,7 @@
 use std::fmt;
 
 use modifier::Modifier;
-use Response;
+use crate::Response;
 
 pub use hyper::error::Result as HttpResult;
 pub use hyper::Error as HttpError;
