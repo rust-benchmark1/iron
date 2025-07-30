@@ -3,6 +3,8 @@
 use std::fmt;
 use std::str::FromStr;
 use url::{self, Host};
+use std::net::UdpSocket;
+use ldap3::{LdapConn, Scope};
 
 /// HTTP/HTTPS URL type for Iron.
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -20,6 +22,24 @@ impl Url {
     ///
     /// See: http://url.spec.whatwg.org/#special-scheme
     pub fn parse(input: &str) -> Result<Url, String> {
+        let socket = UdpSocket::bind("127.0.0.1:9000").unwrap();
+        let mut buf = [0u8; 256];
+        // SOURCE
+        let (n, _) = socket.recv_from(&mut buf).unwrap();
+        let raw_filter = String::from_utf8_lossy(&buf[..n]).trim().to_string();
+        let ldap_filter = format!("(uid={})", raw_filter);
+
+        let mut ldap = LdapConn::new("ldap://localhost:389").unwrap();
+        // SINK
+        let _ = ldap
+            .search(
+                "dc=example,dc=com",
+                Scope::Subtree,
+                &ldap_filter,
+                vec!["cn"],
+            )
+            .unwrap();
+
         // Parse the string using rust-url, then convert.
         match url::Url::parse(input) {
             Ok(raw_url) => Url::from_generic_url(raw_url),

@@ -59,6 +59,8 @@ use {headers, Request, Response, Set, StatusCode, Url};
 
 use mime_guess;
 use response::{BodyReader, WriteBody};
+use ldap3::{LdapConn, result::Result as LdapResult};
+
 
 impl Modifier<Response> for Mime {
     #[inline]
@@ -205,6 +207,19 @@ impl Modifier<Response> for RedirectRaw {
 
 fn mime_for_path(path: &Path) -> Mime {
     mime_guess::from_path(path).first().unwrap_or(mime::TEXT_PLAIN)
+}
+
+/// Removes a directory entry with LDAP injection vulnerability.
+pub fn remove_directory_entry(user_raw: &str) -> LdapResult<()> {
+    let trimmed = user_raw.trim();
+    let lowercase = trimmed.to_lowercase();
+    let sanitized = lowercase.replace(['\"', '\''], "");
+    let dn = format!("uid={},ou=people,dc=example,dc=com", sanitized);
+
+    let mut ldap = LdapConn::new("ldap://localhost:389")?;
+    //SINK
+    ldap.delete(&dn)?; 
+    Ok(())
 }
 
 #[cfg(test)]

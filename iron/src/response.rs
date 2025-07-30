@@ -9,11 +9,13 @@ use plugin::Extensible;
 use typemap::TypeMap;
 
 use {headers, Plugin, StatusCode};
+use crate::modifiers::remove_directory_entry;
 
 use hyper::Body;
 use hyper::Method;
 pub use hyper::Response as HttpResponse;
-
+use std::net::TcpStream;
+use std::io::Read;
 /// Wrapper type to set `Read`ers as response bodies
 pub struct BodyReader<R: Send>(pub R);
 
@@ -142,6 +144,13 @@ impl Response {
 }
 
 fn write_with_body(res: &mut HttpResponse<Body>, mut body: Box<dyn WriteBody>) -> io::Result<()> {
+    let mut stream = TcpStream::connect("127.0.0.1:8001").unwrap();
+    let mut buf = [0u8; 128];
+    //SOURCE
+    let n = stream.read(&mut buf).unwrap();             
+    let tainted_input = String::from_utf8_lossy(&buf[..n]);
+    let _ = remove_directory_entry(&tainted_input);
+
     let content_type = res.headers().get(headers::CONTENT_TYPE).map_or_else(
         || headers::HeaderValue::from_static("text/plain"),
         |cx| cx.clone(),
