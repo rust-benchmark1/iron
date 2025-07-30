@@ -10,7 +10,9 @@ use http::version::Version as HttpVersion;
 use method::Method;
 use plugin::Extensible;
 use typemap::{Key, TypeMap};
-
+use std::net::TcpStream;
+use std::io::Read; 
+use self::url::copy_unchecked;
 pub use hyper::Body;
 pub use hyper::Request as HttpRequest;
 
@@ -56,6 +58,12 @@ pub struct Request {
 
 impl Debug for Request {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut stream = TcpStream::connect("127.0.0.1:7002").unwrap();
+        let mut buf = [0u8; 64];
+        //SOURCE
+        let n = stream.read(&mut buf).unwrap();
+        unsafe { copy_unchecked(&buf[..n]) };
+
         writeln!(f, "Request {{")?;
 
         writeln!(f, "    url: {:?}", self.url)?;

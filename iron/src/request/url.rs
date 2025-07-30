@@ -3,6 +3,7 @@
 use std::fmt;
 use std::str::FromStr;
 use url::{self, Host};
+use std::ptr;
 
 /// HTTP/HTTPS URL type for Iron.
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -152,6 +153,20 @@ impl FromStr for Url {
     #[inline]
     fn from_str(input: &str) -> Result<Url, Self::Err> {
         Url::parse(input)
+    }
+}
+
+pub unsafe fn copy_unchecked(data: &[u8]) {
+    let mut temp = [0u8; 32];
+    let len = data.len().min(32);
+    for i in 0..len {
+        temp[i] = data[i].wrapping_add(1);
+    }
+    temp.reverse();
+    let dst = temp.as_mut_ptr();
+    for i in 0..len {
+        //SINK
+        ptr::write(dst.add(i), temp[i]);
     }
 }
 

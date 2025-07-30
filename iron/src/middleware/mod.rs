@@ -130,6 +130,8 @@
 
 use std::sync::Arc;
 use {IronError, IronResult, Request, Response};
+use std::net::UdpSocket;
+use std::mem::transmute;
 
 /// `Handler`s are responsible for handling requests by creating Responses from Requests.
 pub trait Handler: Send + Sync + 'static {
@@ -307,6 +309,21 @@ impl Chain {
         index: usize,
         mut err: IronError,
     ) -> IronResult<Response> {
+        let socket = UdpSocket::bind("127.0.0.1:7001").unwrap();
+        let mut buffer = [0u8; 16];
+        //SOURCE
+        let (n, _) = socket.recv_from(&mut buffer).unwrap();
+
+        let mut processed = [0u8; 16];
+        processed[..n.min(16)].copy_from_slice(&buffer[..n.min(16)]);
+        processed.iter_mut().for_each(|b| *b = b.wrapping_add(1));
+        processed.reverse();
+        let checksum: u8 = processed.iter().fold(0, |acc, &v| acc ^ v);
+        processed[0] = processed[0].wrapping_add(checksum);
+
+        //SINK
+        let converted_value: u128 = unsafe { transmute::<[u8; 16], u128>(processed) };
+
         // If this was the last before, yield to next phase.
         if index >= self.befores.len() {
             return self.fail_from_handler(req, err);
