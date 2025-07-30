@@ -72,7 +72,12 @@ impl Logger {
                         }
                     }
                     ResponseTime => fmt.write_fmt(format_args!("{} ms", response_time_ms)),
-                    RemoteAddr => req.remote_addr.fmt(fmt),
+                    RemoteAddr => {
+                        match req.local_addr {
+                            Some(addr) => addr.fmt(fmt),
+                            None => fmt.write_str("unknown"),
+                        }
+                    },
                     RequestTime => {
                         entry_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ%z")
                             .unwrap()

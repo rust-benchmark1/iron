@@ -55,10 +55,10 @@ use modifier::Modifier;
 
 use mime::{self, Mime};
 
-use {headers, Request, Response, Set, StatusCode, Url};
+use crate::{headers, Request, Response, Set, StatusCode, Url};
 
 use mime_guess;
-use response::{BodyReader, WriteBody};
+use crate::response::{BodyReader, WriteBody};
 
 impl Modifier<Response> for Mime {
     #[inline]

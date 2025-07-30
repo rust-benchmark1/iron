@@ -123,7 +123,7 @@ pub type IronResult<T> = Result<T, IronError>;
 /// `IronResult`, `IronError` and `Iron`.
 pub mod prelude {
     #[doc(no_inline)]
-    pub use {Chain, Iron, IronError, IronResult, Plugin, Request, Response, Set};
+    pub use crate::{Chain, Iron, IronError, IronResult, Plugin, Request, Response, Set};
 }
 
 /// Re-exports from the `TypeMap` crate.

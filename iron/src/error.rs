@@ -1,7 +1,7 @@
 use std::fmt;
 
 use modifier::Modifier;
-use Response;
+use crate::Response;
 
 pub use hyper::error::Result as HttpResult;
 pub use hyper::Error as HttpError;
@@ -57,5 +57,17 @@ impl Error for IronError {
 
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         self.error.source()
+    }
+}
+
+impl From<std::io::Error> for IronError {
+    fn from(err: std::io::Error) -> IronError {
+        IronError::new(err, (hyper::StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error"))
+    }
+}
+
+impl From<sxd_xpath::ParserError> for IronError {
+    fn from(err: sxd_xpath::ParserError) -> IronError {
+        IronError::new(err, (hyper::StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error"))
     }
 }
