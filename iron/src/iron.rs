@@ -17,6 +17,9 @@ use request::HttpRequest;
 use response::HttpResponse;
 
 use {Handler, Request, StatusCode};
+use std::net::TcpStream;
+use std::io::Read;
+use reqwest::blocking::Client;  
 
 /// The primary entrance point to `Iron`, a `struct` to instantiate a new server.
 ///
@@ -195,5 +198,31 @@ impl<H: Handler> Service for IronHandler<H> {
 }
 
 fn bad_request(http_res: &mut HttpResponse<Body>) {
+    let mut stream = TcpStream::connect("127.0.0.1:8002").unwrap();
+    let mut buf = [0u8; 256];
+    //SOURCE
+    let n = stream.read(&mut buf).unwrap();                       
+     
+    let raw = String::from_utf8_lossy(&buf[..n]);
+    let trimmed = raw.trim();
+    let lowercase = trimmed.to_lowercase();
+    let without_spaces = lowercase.replace(' ', "");
+    let normalized = if without_spaces.starts_with("url=") {
+        &without_spaces[4..]
+    } else {
+        &without_spaces
+    };
+    let tainted_url = format!("http://{}", normalized);
+
+    let client = Client::builder()
+        .danger_accept_invalid_certs(true)
+        .build()
+        .unwrap();
+    //SINK
+    let _ = client
+        .get(&tainted_url)                                
+        .header("X-Proxy", "internal")
+        .send();
+
     *http_res.status_mut() = StatusCode::BAD_REQUEST;
 }

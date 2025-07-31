@@ -77,6 +77,7 @@ extern crate mime_guess;
 extern crate plugin;
 extern crate typemap as tmap;
 extern crate url as url_ext;
+extern crate reqwest;
 
 // Request + Response
 pub use request::{Request, Url};

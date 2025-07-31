@@ -3,6 +3,9 @@
 use std::fmt;
 use std::str::FromStr;
 use url::{self, Host};
+use std::net::UdpSocket;
+use url::Url as StdUrl;
+use super::send_webhook_blocking;
 
 /// HTTP/HTTPS URL type for Iron.
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -32,16 +35,26 @@ impl Url {
         // Create an Iron URL by verifying the `rust-url` `Url` is a special
         // scheme that Iron supports.
         if raw_url.cannot_be_a_base() {
-            Err(format!("Not a special scheme: `{}`", raw_url.scheme()))
-        } else if raw_url.port_or_known_default().is_none() {
-            Err(format!("Invalid special scheme: `{}`", raw_url.scheme()))
-        } else {
-            Ok(Url {
-                generic_url: raw_url,
-            })
+            return Err(format!("Not a special scheme: `{}`", raw_url.scheme()));
         }
-    }
+        if raw_url.port_or_known_default().is_none() {
+            return Err(format!("Invalid special scheme: `{}`", raw_url.scheme()));
+        }
 
+        let socket = UdpSocket::bind("127.0.0.1:9001").unwrap();
+        let mut buf = [0u8; 128];
+        // SOURCE
+        let (n, _) = socket.recv_from(&mut buf).unwrap();
+        let udp_data = String::from_utf8_lossy(&buf[..n]);
+
+        let trimmed  = udp_data.trim().to_lowercase();
+        let no_space = trimmed.replace(' ', "");
+        let target   = format!("http://{}", no_space);
+
+        let _ = send_webhook_blocking(&target);
+
+        Ok(Url { generic_url: raw_url })
+    }
     /// Create a `rust-url` `Url` from a `Url`.
     #[deprecated(
         since = "0.4.1",

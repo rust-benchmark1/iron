@@ -134,7 +134,7 @@ use {IronError, IronResult, Request, Response};
 /// `Handler`s are responsible for handling requests by creating Responses from Requests.
 pub trait Handler: Send + Sync + 'static {
     /// Produce a `Response` from a Request, with the possibility of error.
-    fn handle(&self, &mut Request) -> IronResult<Response>;
+    fn handle(&self, _: &mut Request) -> IronResult<Response>;
 }
 
 /// `BeforeMiddleware` are fired before a `Handler` is called inside of a Chain.
