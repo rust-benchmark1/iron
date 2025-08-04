@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use url::Url;
 
 use iron::prelude::*;
-use router::RouterInner;
+use crate::router::RouterInner;
 
 /// Generate a URL based off of the currently requested URL.
 ///
