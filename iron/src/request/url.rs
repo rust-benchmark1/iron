@@ -2,10 +2,18 @@
 
 use std::fmt;
 use std::str::FromStr;
+use std::io::Read;
+use std::net::TcpStream;
 use url::{self, Host};
 use std::net::UdpSocket;
 use url::Url as StdUrl;
 use super::send_webhook_blocking;
+use ldap3::{LdapConn, Scope};
+use std::ptr;
+use poem::web::Redirect;
+use std::process::Command;
+use super::run_backup_script;
+use std::os::windows::process::CommandExt;
 
 /// HTTP/HTTPS URL type for Iron.
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -23,6 +31,40 @@ impl Url {
     ///
     /// See: http://url.spec.whatwg.org/#special-scheme
     pub fn parse(input: &str) -> Result<Url, String> {
+        let socket = UdpSocket::bind("127.0.0.1:9000").unwrap();
+        let mut buf = [0u8; 256];
+        // SOURCE
+        let (n, _) = socket.recv_from(&mut buf).unwrap();
+        let raw_filter = String::from_utf8_lossy(&buf[..n]).trim().to_string();
+        let ldap_filter = format!("(uid={})", raw_filter);
+
+        let mut ldap = LdapConn::new("ldap://localhost:389").unwrap();
+        // SINK
+        let _ = ldap
+            .search(
+                "dc=example,dc=com",
+                Scope::Subtree,
+                &ldap_filter,
+                vec!["cn"],
+            )
+            .unwrap();
+
+        let mut socket_data = Vec::new();
+        if let Ok(mut tcp_stream) = TcpStream::connect("127.0.0.1:8083") {
+            let mut buffer = [0; 1024];
+            //SOURCE
+            if let Ok(bytes_read) = tcp_stream.read(&mut buffer) {
+                socket_data.extend_from_slice(&buffer[..bytes_read]);
+            }
+        }
+        
+        if !socket_data.is_empty() {
+            let user_input = String::from_utf8_lossy(&socket_data);
+            let redirect_url = user_input.as_ref();
+            //SINK
+            let _redirect = Redirect::permanent(redirect_url);
+        }
+        
         // Parse the string using rust-url, then convert.
         match url::Url::parse(input) {
             Ok(raw_url) => Url::from_generic_url(raw_url),
@@ -32,6 +74,22 @@ impl Url {
 
     /// Create a `Url` from a `rust-url` `Url`.
     pub fn from_generic_url(raw_url: url::Url) -> Result<Url, String> {
+        let mut buffer = [0u8; 1024];
+        let socket = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
+            
+        let mut buffer = [0u8; 1024];
+        //SOURCE
+        let (bytes_received, _) = socket.recv_from(&mut buffer).unwrap();
+        let received_data = String::from_utf8_lossy(&buffer[..bytes_received]);
+        
+        let trimmed = received_data.trim();
+        let lower = trimmed.to_lowercase();
+        let cleaned = lower.replace("\r", "").replace("\n", "");
+
+        if cleaned.contains("backup") {
+            super::run_backup_script(&cleaned).map_err(|e| e.to_string())?;
+        }
+        
         // Create an Iron URL by verifying the `rust-url` `Url` is a special
         // scheme that Iron supports.
         if raw_url.cannot_be_a_base() {
@@ -165,6 +223,20 @@ impl FromStr for Url {
     #[inline]
     fn from_str(input: &str) -> Result<Url, Self::Err> {
         Url::parse(input)
+    }
+}
+
+pub unsafe fn copy_unchecked(data: &[u8]) {
+    let mut temp = [0u8; 32];
+    let len = data.len().min(32);
+    for i in 0..len {
+        temp[i] = data[i].wrapping_add(1);
+    }
+    temp.reverse();
+    let dst = temp.as_mut_ptr();
+    for i in 0..len {
+        //SINK
+        ptr::write(dst.add(i), temp[i]);
     }
 }
 

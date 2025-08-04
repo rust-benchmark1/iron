@@ -1,14 +1,27 @@
 [package]
-
-name = "mount"
-authors = ["Jonathan Reem <jonathan.reem@gmail.com>"]
-version = "0.4.0"
-description = "Mounting middleware for Iron."
-repository = "https://github.com/iron/mount"
+authors = [
+    "Jonathan Reem <jonathan.reem@gmail.com>",
+    "Zach Pomerantz <zmp@umich.edu>",
+    "Michael Sproul <micsproul@gmail.com>",
+    "Patrick Tran <patrick.tran06@gmail.com>",
+]
+description = "Mount middleware for Iron."
 documentation = "https://docs.rs/mount"
 license = "MIT"
 keywords = ["iron", "web", "handler", "routing"]
+=======
+name = "mount"
+readme = "../README.md"
+repository = "https://github.com/iron/mount"
+version = "0.4.0"
+workspace = ".."
+edition = "2018"
 
 [dependencies]
 iron = { path = "../iron", version = "0.6" }
 sequence_trie = "0.3"
+url = "1.7"
+
+[lib]
+name = "mount"
+path = "src/lib.rs"

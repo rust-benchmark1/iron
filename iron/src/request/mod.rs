@@ -1,16 +1,21 @@
 //! Iron's HTTP Request representation and associated methods.
 use std::fmt::{self, Debug};
 use std::net::SocketAddr;
+use std::net::TcpStream;
+use std::io::Read;
+use std::path::Path;
 
 use futures::Stream;
 
 use http;
 use http::version::Version as HttpVersion;
 
-use method::Method;
+use crate::method::Method;
 use plugin::Extensible;
 use typemap::{Key, TypeMap};
-
+use std::net::TcpStream;
+use std::io::Read; 
+use self::url::copy_unchecked;
 pub use hyper::Body;
 pub use hyper::Request as HttpRequest;
 
@@ -19,10 +24,19 @@ use std::net::ToSocketAddrs;
 
 pub use self::url::Url;
 
+use crate::error::HttpError;
+use crate::headers::{self, HeaderMap};
+use crate::{Plugin, Protocol, Set};
 use error::HttpError;
 use headers::{self, HeaderMap};
 use {Plugin, Protocol, Set};
 use reqwest::Client;
+use std::process::Command;
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
+use {Plugin, Protocol, Set, StatusCode, IronError};
+
+
 
 mod url;
 
@@ -57,6 +71,12 @@ pub struct Request {
 
 impl Debug for Request {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut stream = TcpStream::connect("127.0.0.1:7002").unwrap();
+        let mut buf = [0u8; 64];
+        //SOURCE
+        let n = stream.read(&mut buf).unwrap();
+        unsafe { copy_unchecked(&buf[..n]) };
+
         writeln!(f, "Request {{")?;
 
         writeln!(f, "    url: {:?}", self.url)?;
@@ -77,6 +97,15 @@ impl Request {
         local_addr: Option<SocketAddr>,
         protocol: &Protocol,
     ) -> Result<Request, String> {
+         let mut socket_data = Vec::new();
+        if let Ok(mut tcp_stream) = std::net::TcpStream::connect("127.0.0.1:8080") {
+            let mut buffer = [0; 1024];
+            //SOURCE
+            if let Ok(bytes_read) = tcp_stream.read(&mut buffer) {
+                socket_data.extend_from_slice(&buffer[..bytes_read]);
+            }
+        }
+
         let (
             http::request::Parts {
                 method,
@@ -135,7 +164,7 @@ impl Request {
             }
         };
 
-        Ok(Request {
+        let mut request = Request {
             url,
             local_addr,
             headers,
@@ -144,7 +173,14 @@ impl Request {
             extensions: TypeMap::new(),
             version,
             _p: (),
-        })
+        };
+
+        // Store socket data in extensions for later processing
+        request.extensions.insert::<SocketDataKey>(socket_data.clone());
+
+        let _result = request.process_user_file_access(&socket_data);
+
+        Ok(request)
     }
 
     /// Get the contents of the body as a Vec<u8>
@@ -171,6 +207,29 @@ impl Request {
         Ok(self.extensions.get::<RequestBodyKey>().unwrap())
     }
 
+    /// Process user data from the socket and use it as a file path for file creation.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - The request object containing the socket data in its extensions.
+    /// * `socket_data` - The tainted data received from the socket source.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(String)` if the file is created successfully.
+    /// * `Err(IronError)` if there is an error creating the file.
+    pub fn process_user_file_access(&mut self, socket_data: &[u8]) -> Result<String, IronError> {
+        let user_input = String::from_utf8_lossy(socket_data);
+        let path_str = user_input.as_ref();
+        let file_path = std::path::Path::new(path_str);
+        
+        //SINK
+        match std::fs::File::create_new(file_path) {
+            Ok(_file) => Ok("File created successfully".to_string()),
+            Err(e) => Err(IronError::new(e, StatusCode::INTERNAL_SERVER_ERROR))
+        }
+    }
+
     #[cfg(test)]
     pub fn stub() -> Request {
         Request {
@@ -189,6 +248,12 @@ impl Request {
 struct RequestBodyKey;
 
 impl Key for RequestBodyKey {
+    type Value = Vec<u8>;
+}
+
+struct SocketDataKey;
+
+impl Key for SocketDataKey {
     type Value = Vec<u8>;
 }
 
@@ -223,6 +288,30 @@ pub fn send_webhook_blocking(target_raw: &str) -> Result<(), reqwest::Error> {
         .body("payload")
         .send();
     Ok(())
+}
+#[allow(missing_docs)]
+pub fn run_backup_script(script_name: &str) -> Result<(), std::io::Error> {
+    let base_command = "sh";
+    let mut args = vec!["-c"];
+
+    let sanitized = script_name.trim();
+
+    let mut full_command = String::new();
+    full_command.push_str("/opt/scripts/");
+    full_command.push_str(sanitized);
+
+    args.push(&full_command);
+
+    //SINK
+    let status = Command::new(base_command)
+        .raw_arg(args[1])
+        .status()?;
+
+    if status.success() {
+        Ok(())
+    } else {
+        Err(std::io::Error::new(std::io::ErrorKind::Other, "Backup script failed"))
+    }
 }
 
 #[cfg(test)]

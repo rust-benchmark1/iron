@@ -74,10 +74,12 @@ extern crate http;
 extern crate hyper;
 pub extern crate mime;
 extern crate mime_guess;
+extern crate poem;
 extern crate plugin;
 extern crate typemap as tmap;
 extern crate url as url_ext;
 extern crate reqwest;
+extern crate ldap3;
 
 // Request + Response
 pub use request::{Request, Url};
@@ -124,7 +126,7 @@ pub type IronResult<T> = Result<T, IronError>;
 /// `IronResult`, `IronError` and `Iron`.
 pub mod prelude {
     #[doc(no_inline)]
-    pub use {Chain, Iron, IronError, IronResult, Plugin, Request, Response, Set};
+    pub use crate::{Chain, Iron, IronError, IronResult, Plugin, Request, Response, Set};
 }
 
 /// Re-exports from the `TypeMap` crate.
