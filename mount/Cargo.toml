@@ -8,6 +8,8 @@ authors = [
 description = "Mount middleware for Iron."
 documentation = "https://docs.rs/mount"
 license = "MIT"
+keywords = ["iron", "web", "handler", "routing"]
+=======
 name = "mount"
 readme = "../README.md"
 repository = "https://github.com/iron/mount"

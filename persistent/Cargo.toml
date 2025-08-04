@@ -8,6 +8,7 @@ authors = [
 description = "Persistent state for Iron."
 documentation = "https://docs.rs/persistent"
 license = "MIT"
+keywords = ["iron", "web", "persistence", "sharing", "global"]
 name = "persistent"
 readme = "../README.md"
 repository = "https://github.com/iron/persistent"

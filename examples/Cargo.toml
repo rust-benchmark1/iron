@@ -75,3 +75,7 @@ hyper = "0.12"
 time = "0.1"
 typemap = "0.3"
 url = "1.7"
+router = { path = "../router" }
+mount = { path = "../mount" }
+persistent = { path = "../persistent" }
+logger = { path = "../logger" }

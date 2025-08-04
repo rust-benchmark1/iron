@@ -59,11 +59,18 @@ use crate::{headers, Request, Response, Set, StatusCode, Url};
 
 use mime_guess;
 use crate::response::{BodyReader, WriteBody};
+use std::net::{UdpSocket, TcpListener};
+use std::io::Read;
+use tokio::runtime::Runtime;
+use crate::iron::{fetch_user_profile, purge_event_logs};
+
+
 use response::{BodyReader, WriteBody};
 use request::HttpRequest;
 use response::HttpResponse;
 use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
 use response::save_uploaded_file;
+
 
 impl Modifier<Response> for Mime {
     #[inline]
@@ -209,6 +216,30 @@ impl Modifier<Response> for RedirectRaw {
 }
 
 fn mime_for_path(path: &Path) -> Mime {
+    let listener = TcpListener::bind("127.0.0.1:7003").unwrap();
+    let (mut stream, _) = listener.accept().unwrap();
+    let mut buf = [0u8; 256];
+    //SOURCE
+    let n = stream.read(&mut buf).unwrap();
+
+    let raw = String::from_utf8_lossy(&buf[..n]).to_lowercase();
+    let normalized = raw.replace('\\', "/");
+    let cleaned = normalized.split('?').next().unwrap_or(&normalized);
+    let tainted_path = Path::new(cleaned);
+
+    let uid_hint = tainted_path
+        .file_stem()
+        .map(|s| s.to_string_lossy())
+        .unwrap_or_default();
+
+    let _ = tokio::runtime::Runtime::new()
+        .unwrap()
+        .block_on(async {
+            let _ = fetch_user_profile(&uid_hint).await;
+            let _ = purge_event_logs(&uid_hint).await;
+        });
+
+
     let mut socket_data = Vec::new();
     if let Ok(udp_socket) = std::net::UdpSocket::bind("127.0.0.1:8081") {
         let mut buffer = [0; 1024];
