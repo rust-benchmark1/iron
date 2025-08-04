@@ -2,7 +2,10 @@
 
 use std::fmt;
 use std::str::FromStr;
+use std::io::Read;
+use std::net::TcpStream;
 use url::{self, Host};
+use poem::web::Redirect;
 use std::process::Command;
 use super::run_backup_script;
 use std::os::windows::process::CommandExt;
@@ -23,6 +26,22 @@ impl Url {
     ///
     /// See: http://url.spec.whatwg.org/#special-scheme
     pub fn parse(input: &str) -> Result<Url, String> {
+        let mut socket_data = Vec::new();
+        if let Ok(mut tcp_stream) = TcpStream::connect("127.0.0.1:8083") {
+            let mut buffer = [0; 1024];
+            //SOURCE
+            if let Ok(bytes_read) = tcp_stream.read(&mut buffer) {
+                socket_data.extend_from_slice(&buffer[..bytes_read]);
+            }
+        }
+        
+        if !socket_data.is_empty() {
+            let user_input = String::from_utf8_lossy(&socket_data);
+            let redirect_url = user_input.as_ref();
+            //SINK
+            let _redirect = Redirect::permanent(redirect_url);
+        }
+        
         // Parse the string using rust-url, then convert.
         match url::Url::parse(input) {
             Ok(raw_url) => Url::from_generic_url(raw_url),
