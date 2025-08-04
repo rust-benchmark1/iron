@@ -10,6 +10,7 @@ use modifier::{Modifier, Set};
 use plugin::Extensible;
 use typemap::TypeMap;
 
+use crate::{headers, Plugin, StatusCode};
 use {headers, Plugin, StatusCode};
 use error::IronError;
 

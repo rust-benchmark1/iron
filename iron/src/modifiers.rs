@@ -55,9 +55,10 @@ use modifier::Modifier;
 
 use mime::{self, Mime};
 
-use {headers, Request, Response, Set, StatusCode, Url};
+use crate::{headers, Request, Response, Set, StatusCode, Url};
 
 use mime_guess;
+use crate::response::{BodyReader, WriteBody};
 use response::{BodyReader, WriteBody};
 use request::HttpRequest;
 use response::HttpResponse;

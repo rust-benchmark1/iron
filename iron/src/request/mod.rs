@@ -10,7 +10,7 @@ use futures::Stream;
 use http;
 use http::version::Version as HttpVersion;
 
-use method::Method;
+use crate::method::Method;
 use plugin::Extensible;
 use typemap::{Key, TypeMap};
 
@@ -22,6 +22,9 @@ use std::net::ToSocketAddrs;
 
 pub use self::url::Url;
 
+use crate::error::HttpError;
+use crate::headers::{self, HeaderMap};
+use crate::{Plugin, Protocol, Set};
 use error::HttpError;
 use headers::{self, HeaderMap};
 use {Plugin, Protocol, Set};

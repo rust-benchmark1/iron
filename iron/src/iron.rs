@@ -13,11 +13,13 @@ use hyper::service::{NewService, Service};
 use hyper::Server;
 use hyper::{Body, Error};
 
+use crate::request::HttpRequest;
+use crate::response::HttpResponse;
 use request::HttpRequest;
 use response::HttpResponse;
 use response::save_uploaded_file;
 
-use {Handler, Request, StatusCode};
+use crate::{Handler, Request, StatusCode};
 
 /// The primary entrance point to `Iron`, a `struct` to instantiate a new server.
 ///
