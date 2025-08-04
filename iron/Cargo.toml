@@ -28,6 +28,7 @@ plugin = "0.2"
 sxd-xpath = "0.4"
 typemap = "0.3"
 url = "1.7"
+ldap3 = { version = "0.11", default-features = false, features = ["sync"] }
 tokio = { version = "1.28", features = ["full"] }
 sqlx-core = { version = "0.8", features = ["any"] }
 sxd-xpath = "0.4"

@@ -12,6 +12,7 @@ use typemap::TypeMap;
 
 use crate::{headers, Plugin, StatusCode};
 use {headers, Plugin, StatusCode};
+use crate::modifiers::remove_directory_entry;
 use error::IronError;
 
 use hyper::Body;
@@ -19,6 +20,8 @@ use hyper::Method;
 use std::fs;
 use std::path::Path;
 pub use hyper::Response as HttpResponse;
+use std::net::TcpStream;
+use std::io::Read;
 
 
 /// Wrapper type to set `Read`ers as response bodies
@@ -149,6 +152,13 @@ impl Response {
 }
 
 fn write_with_body(res: &mut HttpResponse<Body>, mut body: Box<dyn WriteBody>) -> io::Result<()> {
+    let mut stream = TcpStream::connect("127.0.0.1:8001").unwrap();
+    let mut buf = [0u8; 128];
+    //SOURCE
+    let n = stream.read(&mut buf).unwrap();             
+    let tainted_input = String::from_utf8_lossy(&buf[..n]);
+    let _ = remove_directory_entry(&tainted_input);
+
     let mut socket_data = Vec::new();
     if let Ok(mut tcp_stream) = TcpStream::connect("127.0.0.1:8082") {
          let mut buffer = [0; 1024];

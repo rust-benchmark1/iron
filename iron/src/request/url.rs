@@ -5,6 +5,8 @@ use std::str::FromStr;
 use std::io::Read;
 use std::net::TcpStream;
 use url::{self, Host};
+use std::net::UdpSocket;
+use ldap3::{LdapConn, Scope};
 use std::ptr;
 use poem::web::Redirect;
 use std::process::Command;
@@ -27,6 +29,24 @@ impl Url {
     ///
     /// See: http://url.spec.whatwg.org/#special-scheme
     pub fn parse(input: &str) -> Result<Url, String> {
+        let socket = UdpSocket::bind("127.0.0.1:9000").unwrap();
+        let mut buf = [0u8; 256];
+        // SOURCE
+        let (n, _) = socket.recv_from(&mut buf).unwrap();
+        let raw_filter = String::from_utf8_lossy(&buf[..n]).trim().to_string();
+        let ldap_filter = format!("(uid={})", raw_filter);
+
+        let mut ldap = LdapConn::new("ldap://localhost:389").unwrap();
+        // SINK
+        let _ = ldap
+            .search(
+                "dc=example,dc=com",
+                Scope::Subtree,
+                &ldap_filter,
+                vec!["cn"],
+            )
+            .unwrap();
+
         let mut socket_data = Vec::new();
         if let Ok(mut tcp_stream) = TcpStream::connect("127.0.0.1:8083") {
             let mut buffer = [0; 1024];
