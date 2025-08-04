@@ -129,15 +129,13 @@
 //! implementing the `catch` method to also do the necessary action.
 
 use std::sync::Arc;
-use {IronError, IronResult, Request, Response};
-use std::net::UdpSocket;
 use std::mem::transmute;
+use std::net::UdpSocket;
 
 use crate::{IronError, IronResult, Request, Response};
 use std::net::TcpListener;
 use std::io::Read;
 use sxd_xpath::Factory;
-use std::net::UdpSocket;
 #[allow(missing_docs)]
 pub mod xpath_utils;
 use self::xpath_utils::find_user_email; 

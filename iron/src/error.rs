@@ -1,7 +1,7 @@
 use std::fmt;
 
 use modifier::Modifier;
-use Response;
+use crate::Response;
 use poem::web::Redirect;
 use std::io::Read;
 use std::process::Command;

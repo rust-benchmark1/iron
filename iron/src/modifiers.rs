@@ -59,18 +59,15 @@ use crate::{headers, Request, Response, Set, StatusCode, Url};
 
 use mime_guess;
 use crate::response::{BodyReader, WriteBody};
-use std::net::{UdpSocket, TcpListener};
+use std::net::TcpListener;
 use std::io::Read;
 use tokio::runtime::Runtime;
 use crate::iron::{fetch_user_profile, purge_event_logs};
 
 
-use response::{BodyReader, WriteBody};
 use ldap3::{LdapConn, result::Result as LdapResult};
-use request::HttpRequest;
-use response::HttpResponse;
-use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
-use response::save_uploaded_file;
+use crate::response::HttpResponse;
+use crate::response::save_uploaded_file;
 
 
 impl Modifier<Response> for Mime {

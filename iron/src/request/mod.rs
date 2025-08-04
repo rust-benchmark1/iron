@@ -3,7 +3,6 @@ use std::fmt::{self, Debug};
 use std::net::SocketAddr;
 use std::net::TcpStream;
 use std::io::Read;
-use std::path::Path;
 
 use futures::Stream;
 
@@ -13,8 +12,6 @@ use http::version::Version as HttpVersion;
 use crate::method::Method;
 use plugin::Extensible;
 use typemap::{Key, TypeMap};
-use std::net::TcpStream;
-use std::io::Read; 
 use self::url::copy_unchecked;
 pub use hyper::Body;
 pub use hyper::Request as HttpRequest;
@@ -26,15 +23,11 @@ pub use self::url::Url;
 
 use crate::error::HttpError;
 use crate::headers::{self, HeaderMap};
-use crate::{Plugin, Protocol, Set};
-use error::HttpError;
-use headers::{self, HeaderMap};
-use {Plugin, Protocol, Set};
+use crate::{Plugin, Protocol, Set, StatusCode, IronError};
 use reqwest::Client;
 use std::process::Command;
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
-use {Plugin, Protocol, Set, StatusCode, IronError};
 
 
 

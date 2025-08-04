@@ -16,21 +16,11 @@ use hyper::{Body, Error};
 use crate::request::HttpRequest;
 use crate::response::HttpResponse;
 use crate::{Handler, Request, StatusCode};
-use sqlx_core::any::AnyPoolOptions;
 use sqlx_core::query_as::query_as;
 use sqlx_core::query_as::query_statement_as;
 use sqlx_core::any::Any;
 use sqlx_core::executor::Executor;
-use tokio::net::TcpListener;
-use tokio::io::AsyncReadExt;
-use sxd_xpath::Factory;
-use request::HttpRequest;
-use response::HttpResponse;
-use response::save_uploaded_file;
-
-use crate::{Handler, Request, StatusCode};
-
-use {Handler, Request, StatusCode};
+use crate::response::save_uploaded_file;
 use std::net::TcpStream;
 use std::io::Read;
 use reqwest::blocking::Client;  

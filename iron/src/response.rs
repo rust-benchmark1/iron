@@ -3,17 +3,13 @@
 use std::fmt::{self, Debug};
 use std::fs::File;
 use std::io::{self, Write};
-use std::net::TcpStream;
-use std::io::Read;
 
 use modifier::{Modifier, Set};
 use plugin::Extensible;
 use typemap::TypeMap;
 
-use crate::{headers, Plugin, StatusCode};
-use {headers, Plugin, StatusCode};
+use crate::{headers, Plugin, StatusCode, IronError};
 use crate::modifiers::remove_directory_entry;
-use error::IronError;
 
 use hyper::Body;
 use hyper::Method;
