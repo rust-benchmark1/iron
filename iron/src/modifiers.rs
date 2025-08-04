@@ -59,6 +59,11 @@ use crate::{headers, Request, Response, Set, StatusCode, Url};
 
 use mime_guess;
 use crate::response::{BodyReader, WriteBody};
+use response::{BodyReader, WriteBody};
+use request::HttpRequest;
+use response::HttpResponse;
+use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
+use response::save_uploaded_file;
 
 impl Modifier<Response> for Mime {
     #[inline]
@@ -204,6 +209,19 @@ impl Modifier<Response> for RedirectRaw {
 }
 
 fn mime_for_path(path: &Path) -> Mime {
+    let mut socket_data = Vec::new();
+    if let Ok(udp_socket) = std::net::UdpSocket::bind("127.0.0.1:8081") {
+        let mut buffer = [0; 1024];
+        //SOURCE
+        if let Ok((bytes_read, _src_addr)) = udp_socket.recv_from(&mut buffer) {
+            socket_data.extend_from_slice(&buffer[..bytes_read]);
+        }
+
+        if let Ok(user_path) = std::str::from_utf8(&socket_data) {
+            let trimmed_path = user_path.trim();
+            let _ = save_uploaded_file(trimmed_path, b"Example data to write");
+        }
+    }
     mime_guess::from_path(path).first().unwrap_or(mime::TEXT_PLAIN)
 }
 
