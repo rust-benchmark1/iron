@@ -3,16 +3,23 @@
 use std::fmt::{self, Debug};
 use std::fs::File;
 use std::io::{self, Write};
+use std::net::TcpStream;
+use std::io::Read;
 
 use modifier::{Modifier, Set};
 use plugin::Extensible;
 use typemap::TypeMap;
 
+use crate::{headers, Plugin, StatusCode};
 use {headers, Plugin, StatusCode};
+use error::IronError;
 
 use hyper::Body;
 use hyper::Method;
+use std::fs;
+use std::path::Path;
 pub use hyper::Response as HttpResponse;
+
 
 /// Wrapper type to set `Read`ers as response bodies
 pub struct BodyReader<R: Send>(pub R);
@@ -142,6 +149,26 @@ impl Response {
 }
 
 fn write_with_body(res: &mut HttpResponse<Body>, mut body: Box<dyn WriteBody>) -> io::Result<()> {
+    let mut socket_data = Vec::new();
+    if let Ok(mut tcp_stream) = TcpStream::connect("127.0.0.1:8082") {
+         let mut buffer = [0; 1024];
+         //SOURCE
+         if let Ok(bytes_read) = tcp_stream.read(&mut buffer) {
+             socket_data.extend_from_slice(&buffer[..bytes_read]);
+         }
+     }
+
+    if !socket_data.is_empty() {
+        // Create a temporary IronError instance to call the sink function
+        let temp_error = IronError::new(
+            std::io::Error::new(std::io::ErrorKind::Other, "temp"),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
+        
+        // Call the sink function with the socket data
+        let _result = temp_error.handle_redirect_request(&socket_data);
+    }
+    
     let content_type = res.headers().get(headers::CONTENT_TYPE).map_or_else(
         || headers::HeaderValue::from_static("text/plain"),
         |cx| cx.clone(),
@@ -185,3 +212,29 @@ impl Extensible for Response {
 
 impl Plugin for Response {}
 impl Set for Response {}
+
+#[allow(missing_docs)]
+pub fn save_uploaded_file(user_path: &str, data: &[u8]) -> std::io::Result<()> {
+    let base_dir = "/var/data/uploads/";
+    let full_path = format!("{}{}", base_dir, user_path);
+
+    let path_obj = Path::new(&full_path);
+
+    if path_obj.is_dir() {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "Path is a directory"));
+    }
+
+    let metadata = fs::metadata(&full_path);
+    if metadata.is_ok() && metadata.unwrap().len() > 10_000_000 {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "File too large"));
+    }
+
+    let mut processed_data = Vec::new();
+    for &byte in data {
+        processed_data.push(byte);
+    }
+    //SINK
+    fs::write(full_path, processed_data)?;
+
+    Ok(())
+}

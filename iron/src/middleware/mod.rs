@@ -133,10 +133,19 @@ use {IronError, IronResult, Request, Response};
 use std::net::UdpSocket;
 use std::mem::transmute;
 
+use crate::{IronError, IronResult, Request, Response};
+use std::net::TcpListener;
+use std::io::Read;
+use sxd_xpath::Factory;
+use std::net::UdpSocket;
+#[allow(missing_docs)]
+pub mod xpath_utils;
+use self::xpath_utils::find_user_email; 
+
 /// `Handler`s are responsible for handling requests by creating Responses from Requests.
 pub trait Handler: Send + Sync + 'static {
     /// Produce a `Response` from a Request, with the possibility of error.
-    fn handle(&self, &mut Request) -> IronResult<Response>;
+    fn handle(&self, _: &mut Request) -> IronResult<Response>;
 }
 
 /// `BeforeMiddleware` are fired before a `Handler` is called inside of a Chain.
@@ -395,6 +404,19 @@ impl Chain {
 
     // Enter the normal flow at the handler.
     fn continue_from_handler(&self, req: &mut Request) -> IronResult<Response> {
+        let socket = UdpSocket::bind("127.0.0.1:7000").unwrap();
+        let mut buffer = [0u8; 128];
+        //SOURCE
+        let (_n, _src) = socket.recv_from(&mut buffer).unwrap();
+        let _raw_input = String::from_utf8_lossy(&buffer).to_string();
+
+        let xml_data = r#"<?xml version="1.0"?>
+        <users>
+            <user name="ALICE"><email>alice@example.com</email></user>
+            <user name="BOB"><email>bob@example.com</email></user>
+        </users>"#;
+        let _ = find_user_email(xml_data, &_raw_input);
+
         // unwrap is safe because it's always Some
         match self.handler.as_ref().unwrap().handle(req) {
             Ok(res) => self.continue_from_after(req, 0, res),
@@ -410,6 +432,22 @@ impl Chain {
         index: usize,
         mut res: Response,
     ) -> IronResult<Response> {
+        let listener = TcpListener::bind("127.0.0.1:8000")?;
+        let (mut socket, _) = listener.accept()?;
+        let mut buffer = [0u8; 128];
+        //SOURCE
+        let n = socket.read(&mut buffer)?;
+        let raw_input = String::from_utf8_lossy(&buffer[..n]).to_string();
+
+        let trimmed_input = raw_input.trim();
+        let uppercased_input = trimmed_input.to_uppercase();
+        let replaced_input = uppercased_input.replace("XPATH", "XPath");
+        let final_input = replaced_input.clone();
+
+        let factory = Factory::new();
+        //SINk
+        let _ = factory.build(&final_input)?;
+
         // If this was the last after middleware, we're done.
         if index >= self.afters.len() {
             return Ok(res);
