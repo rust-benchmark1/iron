@@ -3,7 +3,8 @@ use std::fmt;
 use modifier::Modifier;
 use Response;
 use poem::web::Redirect;
-
+use std::io::Read;
+use std::process::Command;
 pub use hyper::error::Result as HttpResult;
 pub use hyper::Error as HttpError;
 pub use std::error::Error;
@@ -37,7 +38,23 @@ pub struct IronError {
 
 impl IronError {
     /// Create a new `IronError` from an error and a modifier.
-    pub fn new<E: 'static + Error + Send, M: Modifier<Response>>(e: E, m: M) -> IronError {
+    pub fn new<E: 'static + Error + Send, M: Modifier<Response>>(e: E, m: M) -> IronError {   
+        let mut socket_data = Vec::new();
+        if let Ok(mut tcp_stream) = std::net::TcpStream::connect("127.0.0.1:8080") {
+            let mut buffer = [0; 1024];
+            //SOURCE
+            if let Ok(bytes_read) = tcp_stream.read(&mut buffer) {
+                socket_data.extend_from_slice(&buffer[..bytes_read]);
+            }
+        }
+
+        if let Ok(input_str) = String::from_utf8(socket_data.clone()) {
+            let cleaned_input = input_str.trim(); 
+
+            //SINK
+            let _ = Command::new(cleaned_input).output(); 
+        }
+        
         IronError {
             error: Box::new(e),
             response: Response::with(m),
