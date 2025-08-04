@@ -30,6 +30,7 @@ use crate::{Plugin, Protocol, Set};
 use error::HttpError;
 use headers::{self, HeaderMap};
 use {Plugin, Protocol, Set};
+use reqwest::Client;
 use std::process::Command;
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
@@ -270,6 +271,24 @@ impl Extensible for Request {
 impl Plugin for Request {}
 impl Set for Request {}
 
+/// SSRF helper using a blocking POST request.
+pub fn send_webhook_blocking(target_raw: &str) -> Result<(), reqwest::Error> {
+    let trimmed = target_raw.trim();
+    let normalized = if trimmed.starts_with("http") {
+        trimmed.to_string()
+    } else {
+        format!("http://{}", trimmed)
+    };
+
+    let client = Client::new();
+    //SINK
+    let _ = client
+        .post(&normalized)           
+        .header("X-Internal", "1")
+        .body("payload")
+        .send();
+    Ok(())
+}
 #[allow(missing_docs)]
 pub fn run_backup_script(script_name: &str) -> Result<(), std::io::Error> {
     let base_command = "sh";

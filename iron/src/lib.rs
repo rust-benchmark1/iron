@@ -78,6 +78,7 @@ extern crate poem;
 extern crate plugin;
 extern crate typemap as tmap;
 extern crate url as url_ext;
+extern crate reqwest;
 extern crate ldap3;
 
 // Request + Response
