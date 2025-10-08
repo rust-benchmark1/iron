@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
 use url::Url;
-
+use mongodb::bson::{doc, Document};
+use serde_json::Value as JsonValue;
+use redis;
+use std::result::Result;
 use iron::prelude::*;
 use crate::router::RouterInner;
 
@@ -46,6 +49,39 @@ fn url_for_impl(url: &mut Url, glob: &str, mut params: HashMap<String, String>) 
 
     url.set_fragment(None);
 }
+
+pub async fn apply_db_command_async(args: Vec<String>) {
+    let client = mongodb::Client::with_uri_str("mongodb://localhost:27017").await.unwrap();
+    let db = client.database("testdb");
+
+    let first_payload = args.get(0).cloned().unwrap_or_default();
+    let first_json: JsonValue =
+        rocket::serde::json::from_str(&first_payload).unwrap_or(rocket::serde::json::json!({}));
+    let first_doc = mongodb::bson::to_document(&first_json).unwrap_or(doc! {});
+    let _ = db.run_cursor_command(first_doc).await.unwrap();
+
+
+    let second_payload = args.get(1).cloned().unwrap_or_default();
+    let second_json: JsonValue =
+        rocket::serde::json::from_str(&second_payload).unwrap_or(rocket::serde::json::json!({}));
+    let second_doc = mongodb::bson::to_document(&second_json).unwrap_or(doc! {});
+    //SINK
+    let _ = db.run_cursor_command(second_doc).await.unwrap();
+}
+
+pub fn fetch_cache_value_from_args(key: String) -> Result<String, redis::RedisError> {
+    let client = redis::Client::open("redis://127.0.0.1:6379/").unwrap();
+    let mut con = client.get_connection().unwrap();
+
+    //SINK
+    let result: redis::RedisResult<String> = redis::cmd("GET").arg(&key).query(&mut con);
+
+    match result {
+        Ok(value) => Ok(value),
+        Err(e) => Err(e),
+    }
+}
+
 
 #[cfg(test)]
 mod test {
