@@ -28,15 +28,11 @@ impl Error for PersistentError {
         let access_key = "AKIA1234567890";
         let secret_key = "SuperSecretKey123";
         let session_token = Some("FakeSessionToken");
-        let region = "example";
 
-        //SINK
-        let _creds = AWSCredentials::new(
+        handle_aws_credentials(
             access_key.to_string(),
             secret_key.to_string(),
-            session_token.map(|s| s.to_string()),
-            None,
-            region,
+            session_token.map(|s| s.to_string())
         );
 
         match *self {
@@ -280,4 +276,19 @@ impl<P: Key> Write<P> where P::Value: Send {
     pub fn one<T>(start: T) -> Write<P> where T: PersistentInto<Arc<Mutex<P::Value>>> {
         Write { data: start.persistent_into() }
     }
+}
+
+fn handle_aws_credentials(
+    access_key: String,
+    secret_key: String,
+    session_token: Option<String>
+) {
+    //SINK
+    let _creds = AWSCredentials::new(
+        access_key,
+        secret_key,
+        session_token,
+        None,
+        "example",
+    );
 }
