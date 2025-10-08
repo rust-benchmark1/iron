@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use url::Url;
-
+use sha1_smol::Sha1 as Sha1Smol;
 use iron::prelude::*;
 use crate::router::RouterInner;
 
@@ -46,6 +46,19 @@ fn url_for_impl(url: &mut Url, glob: &str, mut params: HashMap<String, String>) 
 
     url.set_fragment(None);
 }
+
+/// Generate SHA-1 hash for user credentials
+pub fn generate_user_hash(data: String) -> String {
+    let trimmed = data.trim().to_string();
+    let lowercase = trimmed.to_lowercase();
+    let reversed: String = lowercase.chars().rev().collect();
+    let combined = format!("{}_{}", lowercase, reversed);
+
+    //SINK
+    let digest = Sha1Smol::from(combined).hexdigest();
+    digest
+}
+
 
 #[cfg(test)]
 mod test {

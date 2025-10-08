@@ -20,6 +20,7 @@ edition = "2018"
 iron = { path = "../iron", version = "0.6" }
 log = "0.4"
 time = "0.1"
+ring = "0.17.14"
 
 [lib]
 name = "logger"
