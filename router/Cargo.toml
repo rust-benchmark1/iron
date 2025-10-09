@@ -20,6 +20,7 @@ edition = "2018"
 iron = { path = "../iron", version = "0.6" }
 route-recognizer = "0.1"
 url = "1.7"
+warp = "0.4.2"
 
 [lib]
 name = "router"

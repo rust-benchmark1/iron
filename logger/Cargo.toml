@@ -20,6 +20,7 @@ edition = "2018"
 iron = { path = "../iron", version = "0.6" }
 log = "0.4"
 time = "0.1"
+actix-cors = "0.7.1"
 
 [lib]
 name = "logger"

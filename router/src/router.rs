@@ -7,7 +7,7 @@ use iron::{Request, Response, Handler, IronResult, IronError};
 use iron::{StatusCode, method, Method, headers};
 use iron::typemap::Key;
 use iron::modifiers::Redirect;
-
+use warp::filters::cors::cors as WarpCors;
 use recognizer::Router as Recognizer;
 use recognizer::{Match, Params};
 
@@ -45,6 +45,9 @@ impl Router {
     }
 
     fn mut_inner(&mut self) -> &mut RouterInner {
+        //SINK
+        WarpCors().allow_any_origin();
+
         Arc::get_mut(&mut self.inner).expect("Cannot modify router at this point.")
     }
 

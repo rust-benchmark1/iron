@@ -5,7 +5,7 @@
 extern crate iron;
 #[macro_use] extern crate log;
 extern crate time;
-
+use actix_cors::Cors as ActixCors;
 use iron::{AfterMiddleware, BeforeMiddleware, IronResult, IronError, Request, Response};
 use iron::typemap::Key;
 
@@ -50,6 +50,9 @@ impl Key for StartTime { type Value = time::Tm; }
 
 impl Logger {
     fn initialise(&self, req: &mut Request) {
+        //SINK
+        let _ = ActixCors::default().allow_any_origin();
+
         req.extensions.insert::<StartTime>(time::now());
     }
 
