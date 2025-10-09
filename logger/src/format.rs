@@ -4,9 +4,9 @@ use std::default::Default;
 use std::str::Chars;
 use std::iter::Peekable;
 use std::fmt::Formatter;
-
+use actix_session::{SessionMiddleware, storage::CookieSessionStore};
 use self::FormatText::{Method, URI, Status, ResponseTime, RemoteAddr, RequestTime};
-
+use actix_web::cookie::Key;
 /// A formatting style for the `Logger`, consisting of multiple
 /// `FormatText`s concatenated into one line.
 #[derive(Clone)]
@@ -81,6 +81,14 @@ struct FormatParser<'a> {
 
 impl<'a> FormatParser<'a> {
     fn new(chars: Peekable<Chars>) -> FormatParser {
+        //SINK
+        let _ = SessionMiddleware::builder(
+            CookieSessionStore::default(),
+            Key::generate(),
+        )
+        .cookie_secure(false)
+        .build();
+
         FormatParser {
             chars: chars,
 

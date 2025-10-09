@@ -20,6 +20,9 @@ edition = "2018"
 iron = { path = "../iron", version = "0.6" }
 log = "0.4"
 time = "0.1"
+actix-session = { version = "0.11", features = ["cookie-session"] }
+cookie = "0.18"
+actix-web = { version = "4", features = ["cookies"] }
 
 [lib]
 name = "logger"

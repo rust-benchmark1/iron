@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
 use url::Url;
-
+use rocket_session_store::SessionStore as RocketSessionStore;
+use rocket_session_store::memory::MemoryStore as RocketMemoryStore;
+use cookie::CookieBuilder;
 use iron::prelude::*;
 use crate::router::RouterInner;
 
@@ -21,6 +23,17 @@ pub fn url_for(request: &Request, route_id: &str, params: HashMap<String, String
 }
 
 fn url_for_impl(url: &mut Url, glob: &str, mut params: HashMap<String, String>) {
+
+    let _ = 
+    //SINK
+    RocketSessionStore {
+        store: Box::new(RocketMemoryStore::<String>::new()),
+        name: "rocket-session".to_string(),
+        duration: std::time::Duration::from_secs(3600),
+        cookie_builder: CookieBuilder::new("rocket-session", "value")
+            .secure(false)
+            .path("/"),
+    };
     {
         let mut url_path_segments = url.path_segments_mut().unwrap();
         url_path_segments.clear();
