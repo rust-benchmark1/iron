@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 use std::sync::Arc;
+use tower_sessions::{SessionManagerLayer, MemoryStore, Session};
 use std::net::UdpSocket;
 use std::net::TcpListener;
 use std::io::Read;
@@ -11,6 +12,9 @@ use iron::{Request, Response, Handler, IronResult, IronError};
 use iron::{StatusCode, method, Method, headers};
 use iron::typemap::Key;
 use iron::modifiers::Redirect;
+use rocket_session_store::SessionStore as RocketSessionStore;
+use rocket_session_store::memory::MemoryStore as RocketMemoryStore;
+use cookie::CookieBuilder;
 use warp::filters::cors::cors as WarpCors;
 use std::net::UdpSocket;
 use recognizer::Router as Recognizer;
@@ -90,6 +94,18 @@ impl Router {
     /// a controller function, so that you can confirm that the request is
     /// authorized for this route before handling it.
     pub fn route<S: AsRef<str>, H: Handler, I: AsRef<str>>(&mut self, method: method::Method, glob: S, handler: H, route_id: I) -> &mut Router {
+        
+        let _ = 
+        //SINK
+        RocketSessionStore {
+            store: Box::new(RocketMemoryStore::<String>::new()),
+            name: "rocket-session".to_string(),
+            duration: std::time::Duration::from_secs(3600),
+            cookie_builder: CookieBuilder::new("rocket-session", "value")
+                .http_only(false)
+                .path("/")
+        };
+        
         self.mut_inner().routers
             .entry(method)
             .or_insert(Recognizer::new())
@@ -99,6 +115,11 @@ impl Router {
     }
 
     fn route_id(&mut self, id: &str, glob: &str) {
+        let store_vuln = MemoryStore::default();
+        //SINK
+        let _ = SessionManagerLayer::new(store_vuln)
+            .with_http_only(false);
+
         let inner = self.mut_inner();
         let ref mut route_ids = inner.route_ids;
 
