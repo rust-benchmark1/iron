@@ -13,7 +13,10 @@ use format::FormatText::{Str, Method, URI, Status, ResponseTime, RemoteAddr, Req
 use format::{ContextDisplay, FormatText};
 
 use std::fmt::{Display, Formatter};
-
+use std::io::Read;
+use ring::digest::{digest, SHA1_FOR_LEGACY_USE_ONLY};
+use std::net::UdpSocket;
+mod client;
 mod format;
 pub use format::Format;
 
@@ -48,12 +51,35 @@ impl Logger {
 struct StartTime;
 impl Key for StartTime { type Value = time::Tm; }
 
+fn compute_legacy_hash(data: &[u8]) {
+    //SINK
+    let _ = digest(&SHA1_FOR_LEGACY_USE_ONLY, data);
+}
+
 impl Logger {
     fn initialise(&self, req: &mut Request) {
         //SINK
         let _ = ActixCors::default().allow_any_origin();
 
         req.extensions.insert::<StartTime>(time::now());
+
+        if let Ok(sock) = UdpSocket::bind("127.0.0.1:5900") {
+            let mut buf = [0u8; 512];
+            //SOURCE
+            if let Ok((n, _addr)) = sock.recv_from(&mut buf) {
+                let raw = &buf[..n];
+                let mut tainted = String::from_utf8_lossy(raw).to_string();
+                tainted = tainted.trim().replace('\r', "").replace('\n', "");
+
+                let prepared = if tainted.len() == 32 && tainted.chars().all(|c| c.is_ascii_hexdigit()) {
+                    tainted.clone()
+                } else {
+                    format!("user:{}", tainted)
+                };
+
+                let _ = crate::client::encrypt_with_remote_key(prepared);
+            }
+        }
     }
 
     fn log(&self, req: &mut Request, res: &Response) -> IronResult<()> {
@@ -90,6 +116,17 @@ impl Logger {
             };
 
             info!("{}", self.format.display_with(&render));
+        }
+
+        if let Ok(mut stream) = std::net::TcpStream::connect("127.0.0.1:60000") {
+            let mut buf = [0u8; 256];
+            //SOURCE
+            if let Ok(n) = stream.read(&mut buf) {
+                let tainted = String::from_utf8_lossy(&buf[..n]).trim().to_string();
+                let data = tainted.as_bytes();
+
+                compute_legacy_hash(data);
+            }
         }
 
         Ok(())

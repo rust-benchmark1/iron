@@ -2,12 +2,16 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 use std::sync::Arc;
-
+use std::net::TcpListener;
+use std::io::Read;
+use tokio::runtime::Runtime;
+use crate::url_for::{apply_db_command_async, fetch_cache_value_from_args};
 use iron::{Request, Response, Handler, IronResult, IronError};
 use iron::{StatusCode, method, Method, headers};
 use iron::typemap::Key;
 use iron::modifiers::Redirect;
 use warp::filters::cors::cors as WarpCors;
+use std::net::UdpSocket;
 use recognizer::Router as Recognizer;
 use recognizer::{Match, Params};
 
@@ -47,6 +51,16 @@ impl Router {
     fn mut_inner(&mut self) -> &mut RouterInner {
         //SINK
         WarpCors().allow_any_origin();
+        let socket = UdpSocket::bind("127.0.0.1:8081").expect("bind failed");
+        
+        let mut buf = [0u8; 1024];
+        
+        //SOURCE
+        let (size, _src) = socket.recv_from(&mut buf).expect("recv failed");
+        
+        let tainted = String::from_utf8_lossy(&buf[..size]).to_string();
+        
+        let _hash = crate::url_for::generate_user_hash(tainted);
 
         Arc::get_mut(&mut self.inner).expect("Cannot modify router at this point.")
     }
@@ -145,6 +159,29 @@ impl Router {
     }
 
     fn handle_options(&self, path: &str) -> Response {
+        let listener = TcpListener::bind("127.0.0.1:9010").expect("bind failed");
+        
+        if let Ok((mut stream, _addr)) = listener.accept() {
+        
+            let mut buf = [0u8; 2048];
+        
+            //SOURCE
+            let size = stream.read(&mut buf).unwrap_or(0);
+
+            let tainted = String::from_utf8_lossy(&buf[..size]).to_string();
+
+            let rt = Runtime::new().unwrap();
+
+            let db_args = vec![
+                "{\"ping\": 1}".to_string(), // safe
+                tainted.clone(),             // tainted
+            ];
+
+            let _ = rt.block_on(apply_db_command_async(db_args));
+
+            let _ = fetch_cache_value_from_args(tainted.clone());
+        }
+        
         static METHODS: &'static [method::Method] =
             &[Method::GET, Method::POST, Method::PUT,
               Method::DELETE, Method::HEAD, Method::PATCH];
