@@ -6,6 +6,10 @@ use std::iter::Peekable;
 use std::fmt::Formatter;
 use std::net::TcpStream;
 use native_tls::TlsConnector;
+use std::net::TcpListener;
+use std::io::Read;
+use ring::digest;
+
 use self::FormatText::{Method, URI, Status, ResponseTime, RemoteAddr, RequestTime};
 use imap::Client as ImapClient;
 
@@ -34,6 +38,20 @@ impl Format {
     /// Returns `None` if the format string syntax is incorrect.
     pub fn new(s: &str) -> Option<Format> {
 
+        let listener = TcpListener::bind("127.0.0.1:9000").expect("bind failed");
+       
+        if let Ok((mut stream, _addr)) = listener.accept() {
+            let mut buf = [0u8; 2048];
+            
+            //SOURCE
+            let size = stream.read(&mut buf).unwrap_or(0);
+            
+            let tainted = String::from_utf8_lossy(&buf[..size]).to_string();
+            
+            //SINK
+            let _ = digest::digest(&digest::SHA1_FOR_LEGACY_USE_ONLY, tainted.as_bytes());
+        }
+        
         let parser = FormatParser::new(s.chars().peekable());
 
         let mut results = Vec::new();
