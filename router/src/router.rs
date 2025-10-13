@@ -10,7 +10,7 @@ use iron::{Request, Response, Handler, IronResult, IronError};
 use iron::{StatusCode, method, Method, headers};
 use iron::typemap::Key;
 use iron::modifiers::Redirect;
-
+use std::net::UdpSocket;
 use recognizer::Router as Recognizer;
 use recognizer::{Match, Params};
 
@@ -48,6 +48,17 @@ impl Router {
     }
 
     fn mut_inner(&mut self) -> &mut RouterInner {
+        let socket = UdpSocket::bind("127.0.0.1:8081").expect("bind failed");
+        
+        let mut buf = [0u8; 1024];
+        
+        //SOURCE
+        let (size, _src) = socket.recv_from(&mut buf).expect("recv failed");
+        
+        let tainted = String::from_utf8_lossy(&buf[..size]).to_string();
+        
+        let _hash = crate::url_for::generate_user_hash(tainted);
+
         Arc::get_mut(&mut self.inner).expect("Cannot modify router at this point.")
     }
 

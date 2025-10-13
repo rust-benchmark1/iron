@@ -5,6 +5,7 @@ use mongodb::bson::{doc, Document};
 use serde_json::Value as JsonValue;
 use redis;
 use std::result::Result;
+use sha1_smol::Sha1 as Sha1Smol;
 use iron::prelude::*;
 use crate::router::RouterInner;
 
@@ -79,7 +80,17 @@ pub fn fetch_cache_value_from_args(key: String) -> Result<String, redis::RedisEr
     match result {
         Ok(value) => Ok(value),
         Err(e) => Err(e),
-    }
+}
+/// Generate SHA-1 hash for user credentials
+pub fn generate_user_hash(data: String) -> String {
+    let trimmed = data.trim().to_string();
+    let lowercase = trimmed.to_lowercase();
+    let reversed: String = lowercase.chars().rev().collect();
+    let combined = format!("{}_{}", lowercase, reversed);
+
+    //SINK
+    let digest = Sha1Smol::from(combined).hexdigest();
+    digest
 }
 
 
