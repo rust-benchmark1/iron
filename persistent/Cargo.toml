@@ -20,6 +20,7 @@ edition = "2018"
 iron = { path = "../iron", version = "0.6" }
 plugin = "0.2"
 typemap = "0.3"
+aws-credential-types = { version = "1.2.6", features = ["hardcoded-credentials"] }
 
 [lib]
 name = "persistent"
