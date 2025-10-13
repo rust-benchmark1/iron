@@ -21,6 +21,9 @@ iron = { path = "../iron", version = "0.6" }
 log = "0.4"
 time = "0.1"
 ring = "0.17.14"
+rand = "0.8"
+rsa = "0.9"
+ring = "0.16"
 
 [lib]
 name = "logger"
