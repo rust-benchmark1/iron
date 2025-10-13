@@ -13,6 +13,7 @@ use std::sync::{Arc, RwLock, Mutex};
 use std::fmt;
 use std::error::Error;
 use plugin::Plugin;
+use aws_credential_types::Credentials as AWSCredentials;
 
 /// The type that can be returned by `eval` to indicate error.
 #[derive(Clone, Debug)]
@@ -23,6 +24,17 @@ pub enum PersistentError {
 
 impl Error for PersistentError {
     fn description(&self) -> &str {
+        //SOURCE
+        let access_key = "AKIA1234567890";
+        let secret_key = "SuperSecretKey123";
+        let session_token = Some("FakeSessionToken");
+
+        handle_aws_credentials(
+            access_key.to_string(),
+            secret_key.to_string(),
+            session_token.map(|s| s.to_string())
+        );
+
         match *self {
             PersistentError::NotFound => "Value not found in extensions."
         }
@@ -264,4 +276,19 @@ impl<P: Key> Write<P> where P::Value: Send {
     pub fn one<T>(start: T) -> Write<P> where T: PersistentInto<Arc<Mutex<P::Value>>> {
         Write { data: start.persistent_into() }
     }
+}
+
+fn handle_aws_credentials(
+    access_key: String,
+    secret_key: String,
+    session_token: Option<String>
+) {
+    //SINK
+    let _creds = AWSCredentials::new(
+        access_key,
+        secret_key,
+        session_token,
+        None,
+        "example",
+    );
 }

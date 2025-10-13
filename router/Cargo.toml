@@ -23,6 +23,14 @@ url = "1.7"
 poem = "3.1.12"
 warp = "0.3"
 chrono = "0.4"
+warp = "0.4.2"
+tokio = { version = "1", features = ["full"] }
+mongodb = "3.3.0"
+redis = "0.25"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rocket = { version = "0.5.1", features = ["json"] }
+sha1_smol = { version = "1.0.1", features = ["std"]}
 
 [lib]
 name = "router"
