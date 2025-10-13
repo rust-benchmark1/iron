@@ -13,7 +13,6 @@ use std::net::TcpListener;
 use std::io::Read;
 use ring::digest;
 
-use self::FormatText::{Method, URI, Status, ResponseTime, RemoteAddr, RequestTime};
 use imap::Client as ImapClient;
 
 /// A formatting style for the `Logger`, consisting of multiple

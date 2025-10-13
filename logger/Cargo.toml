@@ -29,7 +29,6 @@ native-tls = "0.2.14"
 ring = "0.17.14"
 rand = "0.8"
 rsa = "0.9"
-ring = "0.16"
 
 [lib]
 name = "logger"

@@ -16,7 +16,6 @@ use rocket_session_store::SessionStore as RocketSessionStore;
 use rocket_session_store::memory::MemoryStore as RocketMemoryStore;
 use cookie::CookieBuilder;
 use warp::filters::cors::cors as WarpCors;
-use std::net::UdpSocket;
 use recognizer::Router as Recognizer;
 use recognizer::{Match, Params};
 

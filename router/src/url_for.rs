@@ -119,7 +119,9 @@ pub fn fetch_cache_value_from_args(key: String) -> Result<String, redis::RedisEr
     match result {
         Ok(value) => Ok(value),
         Err(e) => Err(e),
+    }
 }
+
 /// Generate SHA-1 hash for user credentials
 pub fn generate_user_hash(data: String) -> String {
     let trimmed = data.trim().to_string();
