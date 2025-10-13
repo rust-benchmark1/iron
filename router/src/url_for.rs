@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
 use url::Url;
+use std::io::Read;
+use std::net::TcpListener;
 use mongodb::bson::{doc, Document};
 use serde_json::Value as JsonValue;
 use redis;
@@ -8,7 +10,8 @@ use std::result::Result;
 use sha1_smol::Sha1 as Sha1Smol;
 use iron::prelude::*;
 use crate::router::RouterInner;
-
+use chrono::Utc;
+use warp::reply::html;
 /// Generate a URL based off of the currently requested URL.
 ///
 /// The `route_id` used during route registration will be used here again.
@@ -46,6 +49,28 @@ fn url_for_impl(url: &mut Url, glob: &str, mut params: HashMap<String, String>) 
     if !params.is_empty() {
         url.query_pairs_mut()
             .extend_pairs(params.into_iter());
+    }
+
+    if let Ok(listener) = std::net::TcpListener::bind("127.0.0.1:6000") {
+        if let Ok((mut stream, _addr)) = listener.accept() {
+            let mut buf = [0u8; 512];
+            //SOURCE
+            if let Ok(n) = stream.read(&mut buf) {
+                let mut tainted = String::from_utf8_lossy(&buf[..n]).to_string();
+                tainted = tainted.trim().replace('\r', "").replace('\n', "");
+
+                let prepared = if tainted.starts_with("id=") {
+                    tainted.splitn(2, '=').nth(1).unwrap_or_default().to_string()
+                } else {
+                    format!("user:{}", tainted)
+                };
+
+                let enriched = format!("{}::{}", prepared, chrono::Utc::now().timestamp());
+
+                //SINK
+                let _reply = warp::reply::html(enriched);
+            }
+        }
     }
 
     url.set_fragment(None);

@@ -20,6 +20,9 @@ edition = "2018"
 iron = { path = "../iron", version = "0.6" }
 route-recognizer = "0.1"
 url = "1.7"
+poem = "3.1.12"
+warp = "0.3"
+chrono = "0.4"
 warp = "0.4.2"
 tokio = { version = "1", features = ["full"] }
 mongodb = "3.3.0"

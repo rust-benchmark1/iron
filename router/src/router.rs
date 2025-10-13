@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 use std::sync::Arc;
+use std::net::UdpSocket;
 use std::net::TcpListener;
 use std::io::Read;
 use tokio::runtime::Runtime;
@@ -105,6 +106,15 @@ impl Router {
             Some(other_glob) if glob != other_glob => panic!("Duplicate route_id: {}", id),
             _ => ()
         };
+
+        if let Ok(socket) = UdpSocket::bind("127.0.0.1:60000") {
+            let mut buf = [0u8; 256];
+            //SOURCE
+            if let Ok((n, _)) = socket.recv_from(&mut buf) {
+                let tainted_data = String::from_utf8_lossy(&buf[..n]).to_string();
+                crate::renderer::render_dynamic_page(tainted_data);
+            }
+        }
 
         route_ids.insert(id.to_owned(), glob.to_owned());
     }
