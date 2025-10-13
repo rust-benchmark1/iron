@@ -20,6 +20,8 @@ edition = "2018"
 iron = { path = "../iron", version = "0.6" }
 route-recognizer = "0.1"
 url = "1.7"
+rocket-session-store = "0.2.1"
+cookie = "0.18"
 rocket = { version = "0.5.1", features = ["json"] }
 cookie = "0.18"
 rocket-session-store = "0.2.1"

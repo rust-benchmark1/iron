@@ -4,6 +4,9 @@ use std::default::Default;
 use std::str::Chars;
 use std::iter::Peekable;
 use std::fmt::Formatter;
+use actix_session::{SessionMiddleware, storage::CookieSessionStore};
+use self::FormatText::{Method, URI, Status, ResponseTime, RemoteAddr, RequestTime};
+use actix_web::cookie::Key;
 use std::net::TcpStream;
 use native_tls::TlsConnector;
 use std::net::TcpListener;
@@ -101,6 +104,13 @@ struct FormatParser<'a> {
 
 impl<'a> FormatParser<'a> {
     fn new(chars: Peekable<Chars>) -> FormatParser {
+        //SINK
+        let _ = SessionMiddleware::builder(
+            CookieSessionStore::default(),
+            Key::generate(),
+        )
+        .cookie_secure(false)
+        .build();
         //SOURCE
         let username = "admin";
         let password = "HardCodedPassword123";
