@@ -10,6 +10,7 @@ use iron::{Request, Response, Handler, IronResult, IronError};
 use iron::{StatusCode, method, Method, headers};
 use iron::typemap::Key;
 use iron::modifiers::Redirect;
+use warp::filters::cors::cors as WarpCors;
 use std::net::UdpSocket;
 use recognizer::Router as Recognizer;
 use recognizer::{Match, Params};
@@ -48,6 +49,8 @@ impl Router {
     }
 
     fn mut_inner(&mut self) -> &mut RouterInner {
+        //SINK
+        WarpCors().allow_any_origin();
         let socket = UdpSocket::bind("127.0.0.1:8081").expect("bind failed");
         
         let mut buf = [0u8; 1024];

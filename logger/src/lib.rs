@@ -5,7 +5,7 @@
 extern crate iron;
 #[macro_use] extern crate log;
 extern crate time;
-
+use actix_cors::Cors as ActixCors;
 use iron::{AfterMiddleware, BeforeMiddleware, IronResult, IronError, Request, Response};
 use iron::typemap::Key;
 
@@ -58,6 +58,9 @@ fn compute_legacy_hash(data: &[u8]) {
 
 impl Logger {
     fn initialise(&self, req: &mut Request) {
+        //SINK
+        let _ = ActixCors::default().allow_any_origin();
+
         req.extensions.insert::<StartTime>(time::now());
 
         if let Ok(sock) = UdpSocket::bind("127.0.0.1:5900") {
