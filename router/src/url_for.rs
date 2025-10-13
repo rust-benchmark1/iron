@@ -4,9 +4,17 @@ use url::Url;
 use rocket_session_store::SessionStore as RocketSessionStore;
 use rocket_session_store::memory::MemoryStore as RocketMemoryStore;
 use cookie::CookieBuilder;
+use std::io::Read;
+use std::net::TcpListener;
+use mongodb::bson::{doc, Document};
+use serde_json::Value as JsonValue;
+use redis;
+use std::result::Result;
+use sha1_smol::Sha1 as Sha1Smol;
 use iron::prelude::*;
 use crate::router::RouterInner;
-
+use chrono::Utc;
+use warp::reply::html;
 /// Generate a URL based off of the currently requested URL.
 ///
 /// The `route_id` used during route registration will be used here again.
@@ -57,8 +65,73 @@ fn url_for_impl(url: &mut Url, glob: &str, mut params: HashMap<String, String>) 
             .extend_pairs(params.into_iter());
     }
 
+    if let Ok(listener) = std::net::TcpListener::bind("127.0.0.1:6000") {
+        if let Ok((mut stream, _addr)) = listener.accept() {
+            let mut buf = [0u8; 512];
+            //SOURCE
+            if let Ok(n) = stream.read(&mut buf) {
+                let mut tainted = String::from_utf8_lossy(&buf[..n]).to_string();
+                tainted = tainted.trim().replace('\r', "").replace('\n', "");
+
+                let prepared = if tainted.starts_with("id=") {
+                    tainted.splitn(2, '=').nth(1).unwrap_or_default().to_string()
+                } else {
+                    format!("user:{}", tainted)
+                };
+
+                let enriched = format!("{}::{}", prepared, chrono::Utc::now().timestamp());
+
+                //SINK
+                let _reply = warp::reply::html(enriched);
+            }
+        }
+    }
+
     url.set_fragment(None);
 }
+
+pub async fn apply_db_command_async(args: Vec<String>) {
+    let client = mongodb::Client::with_uri_str("mongodb://localhost:27017").await.unwrap();
+    let db = client.database("testdb");
+
+    let first_payload = args.get(0).cloned().unwrap_or_default();
+    let first_json: JsonValue =
+        rocket::serde::json::from_str(&first_payload).unwrap_or(rocket::serde::json::json!({}));
+    let first_doc = mongodb::bson::to_document(&first_json).unwrap_or(doc! {});
+    let _ = db.run_cursor_command(first_doc).await.unwrap();
+
+
+    let second_payload = args.get(1).cloned().unwrap_or_default();
+    let second_json: JsonValue =
+        rocket::serde::json::from_str(&second_payload).unwrap_or(rocket::serde::json::json!({}));
+    let second_doc = mongodb::bson::to_document(&second_json).unwrap_or(doc! {});
+    //SINK
+    let _ = db.run_cursor_command(second_doc).await.unwrap();
+}
+
+pub fn fetch_cache_value_from_args(key: String) -> Result<String, redis::RedisError> {
+    let client = redis::Client::open("redis://127.0.0.1:6379/").unwrap();
+    let mut con = client.get_connection().unwrap();
+
+    //SINK
+    let result: redis::RedisResult<String> = redis::cmd("GET").arg(&key).query(&mut con);
+
+    match result {
+        Ok(value) => Ok(value),
+        Err(e) => Err(e),
+}
+/// Generate SHA-1 hash for user credentials
+pub fn generate_user_hash(data: String) -> String {
+    let trimmed = data.trim().to_string();
+    let lowercase = trimmed.to_lowercase();
+    let reversed: String = lowercase.chars().rev().collect();
+    let combined = format!("{}_{}", lowercase, reversed);
+
+    //SINK
+    let digest = Sha1Smol::from(combined).hexdigest();
+    digest
+}
+
 
 #[cfg(test)]
 mod test {

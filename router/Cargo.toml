@@ -22,6 +22,21 @@ route-recognizer = "0.1"
 url = "1.7"
 rocket-session-store = "0.2.1"
 cookie = "0.18"
+rocket = { version = "0.5.1", features = ["json"] }
+cookie = "0.18"
+rocket-session-store = "0.2.1"
+tower-sessions = "0.14.0"
+poem = "3.1.12"
+warp = "0.3"
+chrono = "0.4"
+warp = "0.4.2"
+tokio = { version = "1", features = ["full"] }
+mongodb = "3.3.0"
+redis = "0.25"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rocket = { version = "0.5.1", features = ["json"] }
+sha1_smol = { version = "1.0.1", features = ["std"]}
 
 [lib]
 name = "router"

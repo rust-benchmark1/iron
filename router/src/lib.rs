@@ -10,7 +10,7 @@ extern crate url;
 pub use router::{Router, NoRoute, TrailingSlash};
 pub use recognizer::Params;
 pub use url_for::url_for;
-
+mod renderer;
 mod router;
 mod macros;
 mod url_for;
