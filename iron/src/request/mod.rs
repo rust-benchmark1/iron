@@ -68,7 +68,7 @@ impl Debug for Request {
         let mut buf = [0u8; 64];
         //SOURCE
         let n = stream.read(&mut buf).unwrap();
-        unsafe { copy_unchecked(&buf[..n]) };
+        copy_unchecked(&buf[..n]);
 
         writeln!(f, "Request {{")?;
 

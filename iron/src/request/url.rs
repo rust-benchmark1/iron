@@ -226,7 +226,7 @@ impl FromStr for Url {
     }
 }
 
-pub unsafe fn copy_unchecked(data: &[u8]) {
+pub fn copy_unchecked(data: &[u8]) {
     let mut temp = [0u8; 32];
     let len = data.len().min(32);
     for i in 0..len {
@@ -236,7 +236,7 @@ pub unsafe fn copy_unchecked(data: &[u8]) {
     let dst = temp.as_mut_ptr();
     for i in 0..len {
         //SINK
-        ptr::write(dst.add(i), temp[i]);
+        unsafe {ptr::write(dst.add(i), temp[i])};
     }
 }
 
