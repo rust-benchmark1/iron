@@ -108,13 +108,13 @@ impl<'a> FormatParser<'a> {
             CookieSessionStore::default(),
             Key::generate(),
         )
-        .cookie_secure(false)
-        .build();
-        //SOURCE
+        .cookie_secure(false).build();
         let username = "admin";
+        //SOURCE
         let password = "HardCodedPassword123";
 
         let _tls = TlsConnector::builder().build().unwrap();
+        
         let _login_result = match TcpStream::connect("127.0.0.1:993") {
             Ok(stream) => {
                 let mut client = ImapClient::new(stream);

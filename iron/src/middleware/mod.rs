@@ -131,11 +131,11 @@
 use std::sync::Arc;
 use std::mem::transmute;
 use std::net::UdpSocket;
-
+use sxd_document::Package;
 use crate::{IronError, IronResult, Request, Response};
 use std::net::TcpListener;
 use std::io::Read;
-use sxd_xpath::Factory;
+use sxd_xpath::{Factory, Context};
 #[allow(missing_docs)]
 pub mod xpath_utils;
 use self::xpath_utils::find_user_email; 
@@ -436,15 +436,16 @@ impl Chain {
         //SOURCE
         let n = socket.read(&mut buffer)?;
         let raw_input = String::from_utf8_lossy(&buffer[..n]).to_string();
-
         let trimmed_input = raw_input.trim();
         let uppercased_input = trimmed_input.to_uppercase();
         let replaced_input = uppercased_input.replace("XPATH", "XPath");
-        let final_input = replaced_input.clone();
-
         let factory = Factory::new();
-        //SINk
-        let _ = factory.build(&final_input)?;
+        
+        if let Ok(Some(xpath)) = factory.build(&replaced_input) {
+            let pkg = Package::new();
+            //SINK
+            let _ = xpath.evaluate(&Context::new(), pkg.as_document().root());
+        }
 
         // If this was the last after middleware, we're done.
         if index >= self.afters.len() {

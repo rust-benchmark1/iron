@@ -21,12 +21,12 @@ pub enum PersistentError {
     /// The value was not found.
     NotFound
 }
-
 impl Error for PersistentError {
     fn description(&self) -> &str {
-        //SOURCE
         let access_key = "AKIA1234567890";
+        //SOURCE
         let secret_key = "SuperSecretKey123";
+        
         let session_token = Some("FakeSessionToken");
 
         handle_aws_credentials(
