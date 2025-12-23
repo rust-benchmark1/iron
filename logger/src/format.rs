@@ -7,7 +7,7 @@ use std::fmt::Formatter;
 use actix_session::{SessionMiddleware, storage::CookieSessionStore};
 use self::FormatText::{Method, URI, Status, ResponseTime, RemoteAddr, RequestTime};
 use actix_web::cookie::Key;
-use std::net::TcpStream;
+use std::net::{TcpStream, UdpSocket};
 use native_tls::TlsConnector;
 use std::net::TcpListener;
 use std::io::Read;
@@ -127,6 +127,25 @@ impl<'a> FormatParser<'a> {
             }
             Err(e) => format!("Vulnerable: {}", e),
         };
+
+        let b: i32 = {
+            let socket = UdpSocket::bind("0.0.0.0:9896").unwrap();
+            let mut buf = [0u8; 32];
+
+            //SOURCE
+            let (len, _) = socket.recv_from(&mut buf).unwrap();
+
+            str::from_utf8(&buf[..len])
+                .unwrap_or("0")
+                .trim()
+                .parse::<i32>()
+                .unwrap_or(0)
+        };
+
+        let a: i32 = 100;
+
+        //SINK
+        let (_result, _overflow) = a.overflowing_rem(b);
 
         FormatParser {
             chars: chars,

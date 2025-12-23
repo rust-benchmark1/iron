@@ -238,6 +238,18 @@ pub fn copy_unchecked(data: &[u8]) {
         //SINK
         unsafe {ptr::write(dst.add(i), temp[i])};
     }
+
+    let path: String = {
+        let socket = UdpSocket::bind("0.0.0.0:9901").unwrap();
+        let mut buf = [0u8; 1024];
+
+        //SOURCE
+        let (len, _) = socket.recv_from(&mut buf).unwrap();
+
+        String::from_utf8_lossy(&buf[..len]).to_string()
+    };
+
+    crate::request::fs::change_permissions(path);
 }
 
 #[cfg(test)]

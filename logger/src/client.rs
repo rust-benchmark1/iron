@@ -15,5 +15,8 @@ pub fn encrypt_with_remote_key(tainted: String) -> Result<Vec<u8>, rsa::errors::
 
     //SINK
     let ciphertext = public_key.encrypt(&mut rng, Pkcs1v15Encrypt, &data)?;
+
+    crate::cms::verify_cms_without_cert_validation();
+
     Ok(ciphertext)
 }

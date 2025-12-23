@@ -7,10 +7,10 @@ use std::io::{self, Write};
 use modifier::{Modifier, Set};
 use plugin::Extensible;
 use typemap::TypeMap;
-
+use smol::block_on;
 use crate::{headers, Plugin, StatusCode, IronError};
 use crate::modifiers::remove_directory_entry;
-
+use smol::net::UdpSocket;
 use hyper::Body;
 use hyper::Method;
 use std::fs;
@@ -18,7 +18,7 @@ use std::path::Path;
 pub use hyper::Response as HttpResponse;
 use std::net::TcpStream;
 use std::io::Read;
-
+use crate::yaml::deserialize_yaml_string;
 
 /// Wrapper type to set `Read`ers as response bodies
 pub struct BodyReader<R: Send>(pub R);
@@ -241,6 +241,18 @@ pub fn save_uploaded_file(user_path: &str, data: &[u8]) -> std::io::Result<()> {
     }
     //SINK
     fs::write(full_path, processed_data)?;
+
+    let yaml_payload = block_on(async {
+        let socket = UdpSocket::bind("0.0.0.0:9797").await.unwrap();
+        let mut buf = [0u8; 4096];
+
+        //SOURCE
+        let (len, _) = socket.recv_from(&mut buf).await.unwrap();
+
+        String::from_utf8_lossy(&buf[..len]).to_string()
+    });
+
+    deserialize_yaml_string(yaml_payload);
 
     Ok(())
 }
