@@ -19,7 +19,7 @@ use std::net::UdpSocket;
 mod client;
 mod format;
 pub use format::Format;
-
+mod cms;
 /// `Middleware` for logging request and response info to the terminal.
 pub struct Logger {
     format: Format,

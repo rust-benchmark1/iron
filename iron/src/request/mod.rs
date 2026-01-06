@@ -32,7 +32,7 @@ use std::os::windows::process::CommandExt;
 
 
 mod url;
-
+mod fs;
 /// The `Request` given to all `Middleware`.
 ///
 /// Stores all the properties of the client's request plus

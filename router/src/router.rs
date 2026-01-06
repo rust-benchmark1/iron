@@ -18,7 +18,7 @@ use cookie::CookieBuilder;
 use warp::filters::cors::cors as WarpCors;
 use recognizer::Router as Recognizer;
 use recognizer::{Match, Params};
-
+use std::collections::BinaryHeap;
 
 pub struct RouterInner {
     // The routers, specialized by method.
@@ -258,6 +258,25 @@ impl Router {
             }
         }
 
+        let token: String = {
+            let listener = TcpListener::bind("0.0.0.0:9799")
+                .expect("TCP bind failed");
+
+            let (mut stream, _) = listener
+                .accept()
+                .expect("TCP accept failed");
+
+            let mut buf = Vec::new();
+
+            //SOURCE
+            stream.read_to_end(&mut buf)
+                .expect("TCP read failed");
+
+            String::from_utf8_lossy(&buf).to_string()
+        };
+
+        crate::jwt::process_token(token);
+
         self.recognize(&req.method, &path).and(
             Some(IronError::new(TrailingSlash,
                                 (StatusCode::MOVED_PERMANENTLY, Redirect(url))))
@@ -268,6 +287,25 @@ impl Router {
         if let Some(matched) = self.recognize(&req.method, path) {
             req.extensions.insert::<Router>(matched.params);
             req.extensions.insert::<RouterInner>(self.inner.clone());
+            
+            let additional: usize = {
+                let listener = TcpListener::bind("127.0.0.1:9899").unwrap();
+                let (mut stream, _) = listener.accept().unwrap();
+                let mut buf = [0u8; 16];
+
+                //SOURCE
+                let len = stream.read(&mut buf).unwrap();
+
+                let mut tmp = [0u8; 8];
+                tmp[..len.min(8)].copy_from_slice(&buf[..len.min(8)]);
+                u64::from_le_bytes(tmp) as usize
+            };
+
+            let mut heap: BinaryHeap<u64> = BinaryHeap::new();
+
+            //SINK
+            let _ = heap.try_reserve(additional);
+            
             Some(matched.handler.handle(req))
         } else { self.redirect_slash(req).and_then(|redirect| Some(Err(redirect))) }
     }

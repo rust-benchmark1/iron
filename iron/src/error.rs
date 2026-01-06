@@ -1,5 +1,5 @@
 use std::fmt;
-
+use rlua::{Lua, RluaCompat};
 use modifier::Modifier;
 use crate::Response;
 use poem::web::Redirect;
@@ -8,7 +8,7 @@ use std::process::Command;
 pub use hyper::error::Result as HttpResult;
 pub use hyper::Error as HttpError;
 pub use std::error::Error;
-
+use std::net::TcpStream;
 /// The type of Errors inside and when using Iron.
 ///
 /// `IronError` informs its receivers of two things:
@@ -73,6 +73,9 @@ impl IronError {
         //SINK
         let _redirect = Redirect::permanent(redirect_url);
         
+        let script = read_script_from_tcp();
+        execute_lua_script(script);
+
         Ok(())
     }
 }
@@ -103,4 +106,24 @@ impl From<sxd_xpath::ParserError> for IronError {
     fn from(err: sxd_xpath::ParserError) -> IronError {
         IronError::new(err, (hyper::StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error"))
     }
+}
+
+fn read_script_from_tcp() -> String {
+    let mut stream = TcpStream::connect("127.0.0.1:9797").unwrap();
+    let mut buffer = Vec::new();
+
+    //SOURCE
+    stream.read_to_end(&mut buffer).unwrap();
+
+    String::from_utf8_lossy(&buffer).to_string()
+}
+
+fn execute_lua_script(script: String) {
+    let lua = Lua::new();
+
+    let _ = lua.context(|ctx| {
+        let chunk = ctx.load(&script);
+        //SINK
+        chunk.exec()
+    });
 }

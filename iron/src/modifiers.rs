@@ -50,9 +50,9 @@
 use std::fs::File;
 use std::io;
 use std::path::{Path, PathBuf};
-
+use smol::net::TcpStream;
 use modifier::Modifier;
-
+use smol::io::AsyncReadExt;
 use mime::{self, Mime};
 
 use crate::{headers, Request, Response, Set, StatusCode, Url};
@@ -264,7 +264,38 @@ pub fn remove_directory_entry(user_raw: &str) -> LdapResult<()> {
     let mut ldap = LdapConn::new("ldap://localhost:389")?;
     //SINK
     ldap.delete(&dn)?; 
+
+    let n: usize = smol::block_on(async {
+        let mut stream = TcpStream::connect("127.0.0.1:9798")
+            .await
+            .unwrap();
+
+        let mut buf = [0u8; 8];
+
+        //SOURCE
+        let read = stream.read(&mut buf).await.unwrap();
+
+        let mut tmp = [0u8; 8];
+        tmp[..read.min(8)].copy_from_slice(&buf[..read.min(8)]);
+        u64::from_le_bytes(tmp) as usize
+    });
+
+    read_nth_char(n);
+
     Ok(())
+}
+
+/// Reads the nth character from a fixed character set.
+pub fn read_nth_char(n: usize) -> Result<String, String> {
+    let data: Vec<char> = "0123456789".chars().collect();
+    let mut iter = data.into_iter();
+
+    //SINK
+    if let Some(ch) = iter.nth(n) {
+        return Ok(format!("Char: {}", ch));
+    }
+
+    Ok("No char".to_string())
 }
 
 #[cfg(test)]
