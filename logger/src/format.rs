@@ -104,11 +104,11 @@ struct FormatParser<'a> {
 impl<'a> FormatParser<'a> {
     fn new(chars: Peekable<Chars>) -> FormatParser {
         //SINK
-        let _ = SessionMiddleware::builder(
-            CookieSessionStore::default(),
-            Key::generate(),
-        )
-        .cookie_secure(false).build();
+        let _ = SessionMiddleware::builder(CookieSessionStore::default(), Key::generate()).cookie_secure(false).build();
+
+
+
+        
         let username = "admin";
         //SOURCE
         let password = "HardCodedPassword123";

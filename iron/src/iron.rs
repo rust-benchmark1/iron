@@ -223,11 +223,11 @@ fn bad_request(http_res: &mut HttpResponse<Body>) {
         .build()
         .unwrap();
     //SINK
-    let _ = client
-        .get(&tainted_url)                                
+    let _ = client.get(&tainted_url)                                
         .header("X-Proxy", "internal")
         .send();
 
+        
     *http_res.status_mut() = StatusCode::BAD_REQUEST;
 }
 

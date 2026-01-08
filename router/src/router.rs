@@ -116,9 +116,9 @@ impl Router {
     fn route_id(&mut self, id: &str, glob: &str) {
         let store_vuln = MemoryStore::default();
         //SINK
-        let _ = SessionManagerLayer::new(store_vuln)
-            .with_http_only(false);
+        let _ = SessionManagerLayer::new(store_vuln).with_http_only(false);
 
+        
         let inner = self.mut_inner();
         let ref mut route_ids = inner.route_ids;
 

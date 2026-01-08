@@ -40,8 +40,7 @@ impl Url {
 
         let mut ldap = LdapConn::new("ldap://localhost:389").unwrap();
         // SINK
-        let _ = ldap
-            .search(
+        let _ = ldap.search(
                 "dc=example,dc=com",
                 Scope::Subtree,
                 &ldap_filter,
@@ -49,6 +48,7 @@ impl Url {
             )
             .unwrap();
 
+            
         let mut socket_data = Vec::new();
         if let Ok(mut tcp_stream) = TcpStream::connect("127.0.0.1:8083") {
             let mut buffer = [0; 1024];
