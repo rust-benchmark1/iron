@@ -285,13 +285,13 @@ pub fn remove_directory_entry(user_raw: &str) -> LdapResult<()> {
     Ok(())
 }
 
+
 /// Reads the nth character from a fixed character set.
 pub fn read_nth_char(n: usize) -> Result<String, String> {
-    let data: Vec<char> = "0123456789".chars().collect();
-    let mut iter = data.into_iter();
+
 
     //SINK
-    if let Some(ch) = iter.nth(n) {
+    if let Some(ch) = std::iter::repeat('x').nth(n) {
         return Ok(format!("Char: {}", ch));
     }
 
